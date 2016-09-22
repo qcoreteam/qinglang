@@ -36,14 +36,23 @@ include(PhpUtilFuncs)
 #设置相关选项
 option(PHP_OPT_ENABLE_VERBOSE_DEBUG "是否开启详细信息调试编译" OFF)
 option(PHP_OPT_ENABLE_TEST "是否开启测试编译" ON)
+option(PHP_OPT_WITH_THREAD_SUPPORT ON)
+
 #处理相关选项
 if(PHP_OPT_ENABLE_TEST)
    find_package(GoogleTest)
 endif()
+
+#探测系统包依赖
+include(PhpDetectRequirePackages)
+include(PhpCheckRequireHeaders)
+#探测系统编译环境
+
 #配置相关系统
+configure_file("${CMAKE_SOURCE_DIR}/php_config.h.cmake" "${CMAKE_BINARY_DIR}/php_config.h")
 
 #全局的编译器相关的设置
-include_directories(include)
+include_directories(include ${CMAKE_BINARY_DIR}/include)
 #处理相关子文件夹文件
 add_subdirectory(cmake/modules)
 add_subdirectory(include)

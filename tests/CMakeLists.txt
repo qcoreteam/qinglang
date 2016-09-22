@@ -1,0 +1,2 @@
+add_subdirectory(phptests)
+add_subdirectory(unittests)
