@@ -12,8 +12,45 @@ function(php_add_link_opts target_name)
    
 endfunction()
 
+# 根据${CMAKE_CONFIGURATION_TYPES}的值设置target的输出文件夹.
+# 提示：不要哦直接的设置CMAKE_*_OUTPUT_DIRECTORY等cmake变量了，或者一个特定的builder，例如msbuild.exe，可能会混淆
 function(php_set_output_directory target)
-   
+   cmake_parse_arguments(PHP_ARG "BINARY_DIR;LIBRARY_DIR" "" ${ARGN})
+   # module_dir -- 对应LIBRARY_OUTPUT_DIRECTORY.
+   # 他会影响add_library(MODULE)的输出.
+   if(WIN32 OR CYGWIN)
+      # DLL平台
+      set(module_dir ${PHP_ARG_BINARY_DIR})
+   elseif()
+      set(module_dir ${PHP_ARG_LIBRARY_DIR})
+   endif()
+   if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+      foreach(build_mode ${CMAKE_CONFIGURATION_TYPES})
+         string(TOUPPER "${build_mode}" config_suffix)
+         if(PHP_ARG_BINARY_DIR)
+            string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} bi ${PHP_ARG_BINARY_DIR})
+            set_target_properties(${target} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${config_suffix}" ${bi})
+         endif()
+         if(PHP_ARG_LIBRARY_DIR)
+            string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} li ${PHP_ARG_LIBRARY_DIR})
+            set_target_properties(${target} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${config_suffix}" ${li})
+         endif()
+         if(module_dir)
+            string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} mi ${module_dir})
+            set_target_properties(${target} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY_${config_suffix}" ${mi})
+         endif()
+      endforeach()
+   elseif()
+      if(PHP_ARG_BINARY_DIR)
+         set_target_properties(${target} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY" ${PHP_ARG_BINARY_DIR})
+      endif()
+      if(PHP_ARG_LIBRARY_DIR)
+         set_target_properties(${target} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY" ${PHP_ARG_LIBRARY_DIR})
+      endif()
+      if(module_dir)
+         set_target_properties(${target} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY" ${module_dir})
+      endif()
+   endif()
 endfunction()
 
 function(php_add_library name)
