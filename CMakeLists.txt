@@ -57,18 +57,22 @@ if(PHP_OPT_ENABLE_TEST)
    find_package(GoogleTest)
 endif()
 
+# 全局的相关变量设置
+set(PHP_KERNEL_LIB_INCLUDES)
+set(PHP_LANG_INCLUDES)
+set(ZEND_ENGINE_INCLUDES)
+# 这个变量主要保存当前系统已经添加的编译器标志定义
+set(PHP_DEFINITIONS)
+set(PHP_COMPILE_DEFINITIONS)
+# 判断是否需要加上运行时类型信息
+set(PHP_REQUIRES_RTTI ON)
+set(PHP_PTHREAD_LIB)
+
 # 探测系统包依赖
 include(PhpDetectRequirePackages)
 include(PhpCheckRequireHeaders)
 include(PhpBuildHelpFuncs)
 
-#全局的相关变量设置
-
-set(PHP_KERNEL_LIB_INCLUDES)
-set(PHP_LANG_INCLUDES)
-set(ZEND_ENGINE_INCLUDES)
-#这个变量主要保存当前系统已经添加的编译器标志定义
-set(PHP_DEFINITIONS)
 
 # 探测系统编译环境
 
