@@ -13,7 +13,7 @@ function(php_add_link_opts target_name)
 endfunction()
 
 # 根据${CMAKE_CONFIGURATION_TYPES}的值设置target的输出文件夹.
-# 提示：不要哦直接的设置CMAKE_*_OUTPUT_DIRECTORY等cmake变量了，或者一个特定的builder，例如msbuild.exe，可能会混淆
+# 提示：不要直接的设置CMAKE_*_OUTPUT_DIRECTORY等cmake变量，或者一个特定的builder，例如msbuild.exe，可能会混淆
 function(php_set_output_directory target)
    cmake_parse_arguments(PHP_ARG "BINARY_DIR;LIBRARY_DIR" "" ${ARGN})
    # module_dir -- 对应LIBRARY_OUTPUT_DIRECTORY.
