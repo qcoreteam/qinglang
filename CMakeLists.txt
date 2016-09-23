@@ -67,7 +67,7 @@ set(PHP_COMPILE_DEFINITIONS)
 # 判断是否需要加上运行时类型信息
 set(PHP_REQUIRES_RTTI ON)
 set(PHP_PTHREAD_LIB)
-
+set(PHP_OPTIONAL_SOURCES)
 # 内部使用的一些全局变量
 # 这个变量主要是用在 PHP_M_ADD_EXECUTABLE 中，如果没有传人参数，那么宏就会寻找全局 PHP_I_EXCLUDE_FROM_ALL 变量进行操作
 set(PHP_I_EXCLUDE_FROM_ALL)

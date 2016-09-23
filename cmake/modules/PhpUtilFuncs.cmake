@@ -8,25 +8,6 @@ function(php_install_symlink name dest)
    
 endfunction()
 
-function(llvm_replace_compiler_option var old new)
-  # Replaces a compiler option or switch `old' in `var' by `new'.
-  # If `old' is not in `var', appends `new' to `var'.
-  # Example: llvm_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
-  # If the option already is on the variable, don't add it:
-  if( "${${var}}" MATCHES "(^| )${new}($| )" )
-    set(n "")
-  else()
-    set(n "${new}")
-  endif()
-  if( "${${var}}" MATCHES "(^| )${old}($| )" )
-    string( REGEX REPLACE "(^| )${old}($| )" " ${n} " ${var} "${${var}}" )
-  else()
-    set( ${var} "${${var}} ${n}" )
-  endif()
-  set( ${var} "${${var}}" PARENT_SCOPE )
-endfunction(llvm_replace_compiler_option)
-
-
 # 替换编译器选项值 
 # Example: php_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
 # var 变量的名称 
@@ -58,8 +39,26 @@ endfunction()
 function(php_process_sources out_var)
 endfunction()
 
+# 检查当前项目文件夹是否含有不需要的文件
+# 参数的skip 文件件列表
 function(php_check_source_file_list)
-endfunction()
+   set(skip_files ${ARGN})
+   file(GLOB current_dir_files *.c *.cpp)
+   foreach(cur_path ${current_dir_files})
+      get_filename_component(filename ${cur_path} NAME)
+      # 排除隐藏文件
+      if(NOT "${filename}" MATCHES "^\\.")
+         list(FIND PHP_OPTIONAL_SOURCES ${filename} idx)
+         if(idx LESS 0)
+            list(FIND skip_files ${filename} idx)
+            if(idx LESS 0)
+               message(SEND_ERROR "发现未知源代码 ${cur_path}
+                  Please update ${CMAKE_CURRENT_LIST_FILE}\n")
+            endif()
+         endif()
+      endif()
+   endforeach()
+endfunction(php_check_source_file_list)
 
 macro(php_add_td_sources srcs)
 endmacro()
