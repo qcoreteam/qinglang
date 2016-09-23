@@ -30,6 +30,15 @@ function(php_replace_compiler_option var old new)
    set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
+macro(PHP_M_ADD_TD_SOURCES srcs)
+   file(GLOB tds *.td)
+   if(tds)
+      source_group("TableGen descriptions" FILES ${tds})
+      set_source_files_properties(${tds} PROPERTIES HEADER_FILE_ONLY ON)
+      list(APPEND ${srcs} ${tds})
+   endif()
+endmacro(PHP_M_ADD_TD_SOURCES)
+
 # 使用通配符增加头文件
 # header_files_out 识别的头文件列表
 # glob 识别通配符
@@ -53,10 +62,23 @@ function(php_find_all_header_files headers_out additional_header_dirs)
    set(${headers_out} ${all_headers} PARENT_SCOPE)
 endfunction(php_find_all_header_files)
 
+# 为了让 MSVC 和 xcode 把所有的项目文件显示出来我们在这里把headers也全部加入到 source code 列表中
+# out_var 输出的sources文件集合
+# out_var 后面是任意文件列表
 function(php_process_sources out_var)
    cmake_parse_arguments(PHP_ARG "" "" "ADDITIONAL_HEADERS;ADDITIONAL_HEADER_DIRS" ${ARGN})
    set(sources ${PHP_ARG_UNPARSED_ARGUMENTS})
    php_check_source_file_list(${sources})
+   if(MSVC OR XCODE)
+      PHP_M_ADD_TD_SOURCES(sources)
+      php_find_all_header_files(headers "${PHP_ARG_ADDITIONAL_HEADER_DIRS}")
+      if(headers)
+         set_source_files_properties(${headers} PROPERTIES HEADER_FILE_ONLY ON)
+      endif()
+      set_source_files_properties(${PHP_ARG_ADDITIONAL_HEADERS} PROPERTIES HEADER_FILE_ONLY ON)
+      list(APPEND sources ${PHP_ARG_ADDITIONAL_HEADERS} ${headers})
+   endif()
+   set(${out_var} ${sources} PARENT_SCOPE)
 endfunction()
 
 # 检查当前项目文件夹是否含有不需要的文件
@@ -79,6 +101,3 @@ function(php_check_source_file_list)
       endif()
    endforeach()
 endfunction(php_check_source_file_list)
-
-macro(php_add_td_sources srcs)
-endmacro()
