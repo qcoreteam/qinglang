@@ -30,13 +30,33 @@ function(php_replace_compiler_option var old new)
    set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
-function(php_add_header_files_for_glob hdrs_out glob)
-endfunction()
+# 使用通配符增加头文件
+# header_files_out 识别的头文件列表
+# glob 识别通配符
+function(php_add_header_files_for_glob header_files_out glob)
+   file(GLOB header_files ${glob})
+   set(${header_files_out} ${header_files} PARENT_SCOPE)
+endfunction(php_add_header_files_for_glob)
 
-function(php_find_all_header_files hdrs_out additional_headerdirs)
-endfunction()
+# 寻找当前目录下的头文件以及指定additional_header_dirs里面的头文件
+# headers_out 搜索到的头文件的列表
+# additional_header_dirs 附加的头文件目录
+function(php_find_all_header_files headers_out additional_header_dirs)
+   php_add_header_files_for_glob(headers *.h)
+   list(APPEND all_headers ${headers})
+   foreach(additional_dir ${additional_header_dirs})
+      php_add_header_files_for_glob(headers "${additional_dir}/*.h")
+      list(APPEND all_headers ${headers})
+      php_add_header_files_for_glob(headers "${additional_dir}/*.inc")
+      list(APPEND all_headers ${headers})
+   endforeach()
+   set(${headers_out} ${all_headers} PARENT_SCOPE)
+endfunction(php_find_all_header_files)
 
 function(php_process_sources out_var)
+   cmake_parse_arguments(PHP_ARG "" "" "ADDITIONAL_HEADERS;ADDITIONAL_HEADER_DIRS" ${ARGN})
+   set(sources ${PHP_ARG_UNPARSED_ARGUMENTS})
+   php_check_source_file_list(${sources})
 endfunction()
 
 # 检查当前项目文件夹是否含有不需要的文件
