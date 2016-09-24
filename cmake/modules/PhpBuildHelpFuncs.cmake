@@ -67,8 +67,52 @@ function(php_add_symbol_exports target_name export_file)
    set(PHP_COMMON_DEPENDS ${PHP_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction()
 
-function(php_add_link_opts target_name)
-   
+if(NOT WIN32 AND NOT APPLE)
+  execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -Wl,--version
+    OUTPUT_VARIABLE stdout
+    ERROR_QUIET
+    )
+  if("${stdout}" MATCHES "GNU gold")
+    set(PHP_LINKER_IS_GOLD ON)
+  endif()
+endif()
+
+function(php_add_link_optimizations target_name)
+   # 不要在debug编译模式下使用linker优化参数，因为会使编译速度变慢，而且在debug模式中优化也没有任何意义
+   string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
+   if(NOT build_type STREQUAL "DEBUG")
+      # Pass -O3 to the linker. This enabled different optimizations on different
+      # linkers.
+      if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin|SunOS|AIX" OR WIN32))
+        set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                     LINK_FLAGS " -Wl,-O3")
+      endif()
+      if(LLVM_LINKER_IS_GOLD)
+        # With gold gc-sections is always safe.
+        set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                     LINK_FLAGS " -Wl,--gc-sections")
+        # Note that there is a bug with -Wl,--icf=safe so it is not safe
+        # to enable. See https://sourceware.org/bugzilla/show_bug.cgi?id=17704.
+      endif()
+      if(NOT PHP_NO_DEAD_STRIP)
+        if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+          # ld64's implementation of -dead_strip breaks tools that use plugins.
+          set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                       LINK_FLAGS " -Wl,-dead_strip")
+        elseif(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+          set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                       LINK_FLAGS " -Wl,-z -Wl,discard-unused=sections")
+        elseif(NOT WIN32 AND NOT LLVM_LINKER_IS_GOLD)
+          # Object files are compiled with -ffunction-data-sections.
+          # Versions of bfd ld < 2.23.1 have a bug in --gc-sections that breaks
+          # tools that use plugins. Always pass --gc-sections once we require
+          # a newer linker.
+          set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                       LINK_FLAGS " -Wl,--gc-sections")
+        endif()
+      endif()
+   endif()
 endfunction()
 
 # 根据${CMAKE_CONFIGURATION_TYPES}的值设置target的输出文件夹.
