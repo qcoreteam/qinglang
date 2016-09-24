@@ -1,11 +1,70 @@
 # 这个文件定义一些跟编译相关的帮助函数
 # 通用函数定义
-function(php_update_compile_flags name)
-   
-endfunction()
 
 function(php_add_symbol_exports target_name export_file)
-   
+   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set(native_export_file "${target_name}.exports")
+      add_custom_command(OUTPUT ${native_export_file}
+         COMMAND sed -e "s/^/_/" < ${export_file} > ${native_export_file}
+         DEPENDS ${export_file}
+         VERBATIM
+         COMMENT "Creating export file for ${target_name}")
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+         LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+   elseif(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+         LINK_FLAGS " -Wl,-bE:${export_file}")
+   elseif(PHP_HAVE_LINK_VERSION_SCRIPT)
+      # Gold and BFD ld require a version script rather than a plain list.
+      set(native_export_file "${target_name}.exports")
+      # FIXME: Don't write the "local:" line on OpenBSD.
+      add_custom_command(OUTPUT ${native_export_file}
+         COMMAND echo "{" > ${native_export_file}
+         COMMAND grep -q "[[:alnum:]]" ${export_file} && echo "  global:" >> ${native_export_file} || :
+         COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${export_file} >> ${native_export_file}
+         COMMAND echo "  local: *;" >> ${native_export_file}
+         COMMAND echo "};" >> ${native_export_file}
+         DEPENDS ${export_file}
+         VERBATIM
+         COMMENT "Creating export file for ${target_name}")
+      if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+         set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+            LINK_FLAGS "  -Wl,-M,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+      else()
+         set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+            LINK_FLAGS "  -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+      endif()
+   else()
+      set(native_export_file "${target_name}.def")
+      add_custom_command(OUTPUT ${native_export_file}
+         COMMAND ${PYTHON_EXECUTABLE} -c "import sys;print(''.join(['EXPORTS\\n']+sys.stdin.readlines(),))"
+         < ${export_file} > ${native_export_file}
+         DEPENDS ${export_file}
+         VERBATIM
+         COMMENT "Creating export file for ${target_name}")
+      set(export_file_linker_flag "${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+      if(MSVC)
+         set(export_file_linker_flag "/DEF:\"${export_file_linker_flag}\"")
+      endif()
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+         LINK_FLAGS " ${export_file_linker_flag}")
+   endif()
+   add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
+   set_target_properties(${target_name}_exports PROPERTIES FOLDER "Misc")
+   get_property(srcs TARGET ${target_name} PROPERTY SOURCES)
+   foreach(src ${srcs})
+      get_filename_component(extension ${src} EXT)
+      if(extension STREQUAL ".cpp")
+         set(first_source_file ${src})
+         break()
+      endif()
+   endforeach()
+   set_property(DIRECTORY APPEND
+      PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${native_export_file})
+   add_dependencies(${target_name} ${target_name}_exports)
+   # Add dependency to *_exports later -- CMake issue 14747
+   list(APPEND PHP_COMMON_DEPENDS ${target_name}_exports)
+   set(PHP_COMMON_DEPENDS ${PHP_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction()
 
 function(php_add_link_opts target_name)
