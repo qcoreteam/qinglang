@@ -1,7 +1,33 @@
 #这个文件定义一些常用的工具类
 
 function(php_install_library_symlink name dest type)
-   
+   cmake_parse_arguments(PHP_ARG "ALWAYS_GENERATE" "COMPONENT" "" ${ARGN})
+   foreach(path ${CMAKE_MODULE_PATH})
+      if(EXISTS ${path}/PhpInstallSymlink.cmake)
+         set(INSTALL_SYMLINK ${path}/PhpInstallSymlink.cmake)
+         break()
+      endif()
+   endforeach()
+   set(component ${PHP_ARG_COMPONENT})
+   if(NOT component)
+      set(component ${name})
+   endif()
+   set(full_name ${CMAKE_${type}_LIBRARY_PREFIX}${name}${CMAKE_${type}_LIBRARY_SUFFIX})
+   set(full_dest ${CMAKE_${type}_LIBRARY_PREFIX}${dest}${CMAKE_${type}_LIBRARY_SUFFIX})
+   set(output_dir lib${PHP_LIBDIR_SUFFIX})
+   if(WIN32 AND "${type}" STREQUAL "SHARED")
+      set(output_dir bin)
+   endif()
+   install(SCRIPT ${INSTALL_SYMLINK}
+      CODE "install_symlink(${full_name} ${full_dest} ${output_dir})"
+      COMPONENT ${component})
+   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT PHP_ARG_ALWAYS_GENERATE)
+      add_custom_target(install-${name}
+         DEPENDS ${name} ${dest} install-${dest}
+         COMMAND "${CMAKE_COMMAND}"
+         -DCMAKE_INSTALL_COMPONENT=${name}
+         -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+   endif()
 endfunction()
 
 function(php_install_symlink name dest)
