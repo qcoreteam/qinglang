@@ -84,3 +84,7 @@ if (PHP_OPT_INSTALL_SUPPORT_FILES)
     PATTERN PhpConfigVersion.cmake EXCLUDE
     PATTERN PhpCfgFuncs.cmake EXCLUDE)
 endif()
+
+php_add_file_to_display_pool(
+   PhpCfgFuncs.cmake
+   PhpInstallSymlink.cmake)

@@ -127,17 +127,19 @@ endfunction(php_check_source_file_list)
 
 # 这个函数主要是解决Qt creator有些文件不显示的问题
 function(php_add_file_to_display_pool)
+   get_property(display_files GLOBAL PROPERTY PHP_I_DISPLAY_FILES)
    foreach(file_path ${ARGN})
-      list(FIND PHP_I_DISPLAY_FILES ${file_path} idx)
+      list(FIND display_files ${file_path} idx)
       if(idx LESS 0)
-         list(APPEND PHP_I_DISPLAY_FILES ${file_path})
+         list(APPEND display_files "${CMAKE_CURRENT_SOURCE_DIR}/${file_path}")
       endif()
    endforeach()
-   set(PHP_I_DISPLAY_FILES ${PHP_I_DISPLAY_FILES} PARENT_SCOPE)
+   set_property(GLOBAL PROPERTY PHP_I_DISPLAY_FILES ${display_files})
 endfunction()
 
 # 将display文件进行显示
 function(php_add_display_target)
-   add_custom_target(display_targets SOURCES ${PHP_I_DISPLAY_FILES})
+   get_property(display_files GLOBAL PROPERTY PHP_I_DISPLAY_FILES)
+   add_custom_target(display_targets SOURCES ${display_files})
 endfunction()
 

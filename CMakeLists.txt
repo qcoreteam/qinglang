@@ -113,7 +113,10 @@ set(PHP_OPTIONAL_SOURCES)
 # 内部使用的一些全局变量
 # 这个变量主要是用在 PHP_M_ADD_EXECUTABLE 中，如果没有传人参数，那么宏就会寻找全局 PHP_I_EXCLUDE_FROM_ALL 变量进行操作
 set(PHP_I_EXCLUDE_FROM_ALL)
-set(PHP_I_DISPLAY_FILES)
+
+# 设置一些全局的属性，便于操作
+set_property(GLOBAL PROPERTY PHP_I_DISPLAY_FILES)
+
 # 探测系统包依赖
 include(PhpDetectRequirePackages)
 include(PhpCheckRequireHeaders)
@@ -177,14 +180,12 @@ endif()
 if(PHP_OPT_INCLUDE_DOCS)
    add_subdirectory(docs)
 endif()
-
 php_add_file_to_display_pool(
    LICENSE.txt 
    NEWS.txt
    README.txt
    INSTALL.txt
    NOTES.txt)
-
 php_add_display_target()
 
 # 安装相关文件
