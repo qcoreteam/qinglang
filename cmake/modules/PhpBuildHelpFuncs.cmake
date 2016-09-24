@@ -156,8 +156,237 @@ function(php_set_output_directory target)
    endif()
 endfunction()
 
+
+# 更新目标的编译flag
+# name target名称
+# PHP_TEMP_COMPILE_FLAGS 需要添加的编译器标志
+# PHP_TEMP_COMPILE_DEFINITIONS 需要添加的编译器定义
+function(php_update_compile_flags name)
+  get_property(sources TARGET ${name} PROPERTY SOURCES)
+  if("${sources}" MATCHES "\\.c(;|$)")
+    set(update_src_props ON)
+  endif()
+  # LLVM_REQUIRES_EH is an internal flag that individual targets can use to
+  # force EH
+  if(PHP_REQUIRES_EH OR PHP_ENABLE_EH)
+    if(NOT (PHP_REQUIRES_RTTI OR PHP_ENABLE_RTTI))
+      message(AUTHOR_WARNING "Exception handling requires RTTI. Enabling RTTI for ${name}")
+      set(PHP_REQUIRES_RTTI ON)
+    endif()
+    if(MSVC)
+      list(APPEND PHP_COMPILE_FLAGS "/EHsc")
+    endif()
+  else()
+    if(PHP_COMPILER_IS_GCC_COMPATIBLE)
+      list(APPEND PHP_COMPILE_FLAGS "-fno-exceptions")
+    elseif(MSVC)
+      list(APPEND PHP_COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0)
+      list(APPEND PHP_COMPILE_FLAGS "/EHs-c-")
+    endif()
+  endif()
+  # LLVM_REQUIRES_RTTI is an internal flag that individual
+  # targets can use to force RTTI
+  set(PHP_CONFIG_HAS_RTTI YES CACHE INTERNAL "")
+  if(NOT (PHP_REQUIRES_RTTI OR PHP_ENABLE_RTTI))
+    set(PHP_CONFIG_HAS_RTTI NO CACHE INTERNAL "")
+    list(APPEND PHP_COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
+    if (PHP_COMPILER_IS_GCC_COMPATIBLE)
+      list(APPEND PHP_COMPILE_FLAGS "-fno-rtti")
+    elseif (MSVC)
+      list(APPEND PHP_COMPILE_FLAGS "/GR-")
+    endif ()
+  elseif(MSVC)
+    list(APPEND PHP_COMPILE_FLAGS "/GR")
+  endif()
+  # Assume that;
+  #   - LLVM_COMPILE_FLAGS is list.
+  #   - PROPERTY COMPILE_FLAGS is string.
+  string(REPLACE ";" " " target_compile_flags " ${PHP_TEMP_COMPILE_FLAGS}")
+  if(update_src_props)
+    foreach(fn ${sources})
+      get_filename_component(suf ${fn} EXT)
+      if("${suf}" STREQUAL ".cpp")
+        set_property(SOURCE ${fn} APPEND_STRING PROPERTY
+          COMPILE_FLAGS "${target_compile_flags}")
+      endif()
+    endforeach()
+  else()
+    # Update target props, since all sources are C++.
+    set_property(TARGET ${name} APPEND_STRING PROPERTY
+      COMPILE_FLAGS "${target_compile_flags}")
+  endif()
+  set_property(TARGET ${name} APPEND PROPERTY COMPILE_DEFINITIONS ${PHP_TEMP_COMPILE_DEFINITIONS})
+endfunction()
+
+# php_add_library(name sources...
+#   SHARED;STATIC
+#     STATIC by default w/o BUILD_SHARED_LIBS.
+#     SHARED by default w/  BUILD_SHARED_LIBS.
+#   OBJECT
+#     Also create an OBJECT library target. Default if STATIC && SHARED.
+#   MODULE
+#     Target ${name} might not be created on unsupported platforms.
+#     Check with "if(TARGET ${name})".
+#   DISABLE_PHP_LINK_PHP_DYLIB
+#     Do not link this library to libLLVM, even if
+#     PHP_LINK_PHP_DYLIB is enabled.
+#   OUTPUT_NAME name
+#     Corresponds to OUTPUT_NAME in target properties.
+#   DEPENDS targets...
+#     Same semantics as add_dependencies().
+#   LINK_COMPONENTS components...
+#     Same as the variable PHP_LINK_COMPONENTS.
+#   LINK_LIBS lib_targets...
+#     Same semantics as target_link_libraries().
+#   ADDITIONAL_HEADERS
+#     May specify header files for IDE generators.
+#   SONAME
+#     Should set SONAME link flags and create symlinks
+#   )
 function(php_add_library name)
-   
+   cmake_parse_arguments(PHP_ARG
+     "MODULE;SHARED;STATIC;OBJECT;DISABLE_PHP_LINK_PHP_DYLIB;SONAME"
+     "OUTPUT_NAME"
+     "ADDITIONAL_HEADERS;DEPENDS;LINK_COMPONENTS;LINK_LIBS;OBJLIBS"
+     ${ARGN})
+  list(APPEND PHP_COMMON_DEPENDS ${PHP_ARG_DEPENDS})
+  if(PHP_ARG_ADDITIONAL_HEADERS)
+    # Pass through ADDITIONAL_HEADERS.
+    set(PHP_ARG_ADDITIONAL_HEADERS ADDITIONAL_HEADERS ${PHP_ARG_ADDITIONAL_HEADERS})
+  endif()
+  if(PHP_ARG_OBJLIBS)
+    set(ALL_FILES ${PHP_ARG_OBJLIBS})
+  else()
+    php_process_sources(ALL_FILES ${PHP_ARG_UNPARSED_ARGUMENTS} ${PHP_ARG_ADDITIONAL_HEADERS})
+  endif()
+  if(PHP_ARG_MODULE)
+    if(PHP_ARG_SHARED OR PHP_ARG_STATIC)
+      message(WARNING "MODULE with SHARED|STATIC doesn't make sense.")
+    endif()
+  else()
+    if(PHP_ARG_PLUGIN_TOOL)
+      message(WARNING "PLUGIN_TOOL without MODULE doesn't make sense.")
+    endif()
+    if(BUILD_SHARED_LIBS AND NOT PHP_ARG_STATIC)
+      set(PHP_ARG_SHARED TRUE)
+    endif()
+    if(NOT PHP_ARG_SHARED)
+      set(PHP_ARG_STATIC TRUE)
+    endif()
+  endif()
+  # Generate objlib
+  if((PHP_ARG_SHARED AND PHP_ARG_STATIC) OR PHP_ARG_OBJECT)
+    # Generate an obj library for both targets.
+    set(obj_name "obj.${name}")
+    add_library(${obj_name} OBJECT EXCLUDE_FROM_ALL
+      ${ALL_FILES}
+      )
+    php_update_compile_flags(${obj_name})
+    set(ALL_FILES "$<TARGET_OBJECTS:${obj_name}>")
+    # Do add_dependencies(obj) later due to CMake issue 14747.
+    list(APPEND objlibs ${obj_name})
+    set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
+  endif()
+  if(PHP_ARG_SHARED AND PHP_ARG_STATIC)
+    # static
+    set(name_static "${name}_static")
+    if(PHP_ARG_OUTPUT_NAME)
+      set(output_name OUTPUT_NAME "${PHP_ARG_OUTPUT_NAME}")
+    endif()
+    # DEPENDS has been appended to LLVM_COMMON_LIBS.
+    php_add_library(${name_static} STATIC
+      ${output_name}
+      OBJLIBS ${ALL_FILES} # objlib
+      LINK_LIBS ${PHP_ARG_LINK_LIBS}
+      LINK_COMPONENTS ${PHP_ARG_LINK_COMPONENTS}
+      )
+    # FIXME: Add name_static to anywhere in TARGET ${name}'s PROPERTY.
+    set(PHP_ARG_STATIC)
+  endif()
+  if(PHP_ARG_MODULE)
+    add_library(${name} MODULE ${ALL_FILES})
+  elseif(PHP_ARG_SHARED)
+    add_library(${name} SHARED ${ALL_FILES})
+  else()
+    add_library(${name} STATIC ${ALL_FILES})
+  endif()
+  php_set_output_directory(${name} BINARY_DIR ${PHP_RUNTIME_OUTPUT_INTDIR} LIBRARY_DIR ${PHP_LIBRARY_OUTPUT_INTDIR})
+  # $<TARGET_OBJECTS> doesn't require compile flags.
+  if(NOT obj_name)
+    php_update_compile_flags(${name})
+  endif()
+  php_add_link_optimizations(${name})
+  if(PHP_ARG_OUTPUT_NAME)
+    set_target_properties(${name}
+      PROPERTIES
+      OUTPUT_NAME ${PHP_ARG_OUTPUT_NAME}
+      )
+  endif()
+
+  if(PHP_ARG_MODULE)
+    set_target_properties(${name} PROPERTIES
+      PREFIX ""
+      SUFFIX ${PHP_PLUGIN_EXT}
+      )
+  endif()
+
+  if(PHP_ARG_SHARED)
+    if(WIN32)
+      set_target_properties(${name} PROPERTIES
+        PREFIX ""
+        )
+    endif()
+  endif()
+  if(PHP_ARG_MODULE OR PHP_ARG_SHARED)
+    # Do not add -Dname_EXPORTS to the command-line when building files in this
+    # target. Doing so is actively harmful for the modules build because it
+    # creates extra module variants, and not useful because we don't use these
+    # macros.
+    set_target_properties(${name} PROPERTIES DEFINE_SYMBOL "")
+    if (PHP_EXPORTED_SYMBOL_FILE)
+       php_add_symbol_exports(${name} ${PHP_EXPORTED_SYMBOL_FILE})
+    endif()
+  endif()
+  if(PHP_ARG_SHARED AND UNIX)
+    if(NOT APPLE AND PHP_ARG_SONAME)
+      get_target_property(output_name ${name} OUTPUT_NAME)
+      if(${output_name} STREQUAL "output_name-NOTFOUND")
+        set(output_name ${name})
+      endif()
+      set(library_name ${output_name}-${PHP_VERSION_MAJOR}.${PHP_VERSION_MINOR}${PHP_VERSION_STAGE})
+      set(api_name ${output_name}-${PHP_VERSION_MAJOR}.${PHP_VERSION_MINOR}.${PHP_VERSION_PATCH}${PHP_VERSION_STAGE})
+      set_target_properties(${name} PROPERTIES OUTPUT_NAME ${library_name})
+      php_install_library_symlink(${api_name} ${library_name} SHARED
+        COMPONENT ${name}
+        ALWAYS_GENERATE)
+      php_install_library_symlink(${output_name} ${library_name} SHARED
+        COMPONENT ${name}
+        ALWAYS_GENERATE)
+    endif()
+  endif()
+  if(PHP_ARG_STATIC)
+    set(libtype INTERFACE)
+  else()
+    # We can use PRIVATE since SO knows its dependent libs.
+    set(libtype PRIVATE)
+  endif()
+  target_link_libraries(${name} ${libtype}
+      ${PHP_ARG_LINK_LIBS}
+      ${lib_deps}
+      ${php_libs}
+      )
+
+  if(PHP_COMMON_DEPENDS)
+    add_dependencies(${name} ${PHP_COMMON_DEPENDS})
+    # Add dependencies also to objlibs.
+    # CMake issue 14747 --  add_dependencies() might be ignored to objlib's user.
+    foreach(objlib ${objlibs})
+      add_dependencies(${objlib} ${PHP_COMMON_DEPENDS})
+    endforeach()
+  endif()
+  if(PHP_ARG_SHARED OR PHP_ARG_MODULE)
+    php_externalize_debuginfo(${name})
+  endif()
 endfunction()
 
 # 增加一个单元测试
