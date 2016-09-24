@@ -5,7 +5,30 @@ function(php_install_library_symlink name dest type)
 endfunction()
 
 function(php_install_symlink name dest)
-   
+   cmake_parse_arguments(PHP_ARG "ALWAYS_GENERATE" "" "" ${ARGN})
+   foreach(path ${CMAKE_MODULE_PATH})
+      if(EXISTS ${path}/PhpInstallSymlink.cmake)
+         set(INSTALL_SYMLINK ${path}/PhpInstallSymlink.cmake)
+         break()
+      endif()
+   endforeach()
+   if(PHP_ARG_ALWAYS_GENERATE)
+      set(component ${dest})
+   else()
+      set(component ${name})
+   endif()
+   set(full_name ${name}${CMAKE_EXECUTABLE_SUFFIX})
+   set(full_dest ${dest}${CMAKE_EXECUTABLE_SUFFIX})
+   install(SCRIPT ${INSTALL_SYMLINK}
+      CODE "install_symlink(${full_name} ${full_dest} ${PHP_INSTALL_DIR})"
+      COMPONENT ${component})
+   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT PHP_ARG_ALWAYS_GENERATE)
+      add_custom_target(install-${name}
+         DEPENDS ${name} ${dest} install-${dest}
+         COMMAND "${CMAKE_COMMAND}"
+         -DCMAKE_INSTALL_COMPONENT=${name}
+         -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+   endif()
 endfunction()
 
 # 替换编译器选项值 
