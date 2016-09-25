@@ -118,7 +118,7 @@ endfunction()
 # 根据${CMAKE_CONFIGURATION_TYPES}的值设置target的输出文件夹.
 # 提示：不要直接的设置CMAKE_*_OUTPUT_DIRECTORY等cmake变量，或者一个特定的builder，例如msbuild.exe，可能会混淆
 function(php_set_output_directory target)
-   cmake_parse_arguments(PHP_ARG "BINARY_DIR;LIBRARY_DIR" "" ${ARGN})
+   cmake_parse_arguments(PHP_ARG "BINARY_DIR;LIBRARY_DIR" "" "" ${ARGN})
    # module_dir -- 对应LIBRARY_OUTPUT_DIRECTORY.
    # 他会影响add_library(MODULE)的输出.
    if(WIN32 OR CYGWIN)
@@ -389,7 +389,7 @@ endfunction()
 # 增加一个单元测试
 # test_suite 测试集合名称，通常是一个大的模块放在一起然后给一个名字
 # test_name 测试集合里面的单个测试名字
-function(add_unittest test_suite test_name)
+function(php_add_unittest test_suite test_name)
    if(NOT PHP_OPT_ENABLE_TEST)
       set(EXCLUDE_FROM_ALL ON)
    endif()
@@ -400,7 +400,7 @@ function(add_unittest test_suite test_name)
       list(APPEND PHP_COMPILE_DEFINITIONS GTEST_HAS_PTHREAD=1)
    endif ()
    set(PHP_REQUIRES_RTTI OFF)
-   php_m_add_executable(${test_name} IGNORE_EXTERNALIZE_DEBUGINFO ${ARGN})
+   php_m_add_executable(${test_name} ${ARGN})
    set(outdir ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
    php_set_output_directory(${test_name} BINARY_DIR ${outdir} LIBRARY_DIR ${outdir})
    # libpthreads overrides some standard library symbols, so main
@@ -416,6 +416,7 @@ endfunction()
 
 # 相关宏定义
 # PHP_TEMP_EXCLUDE_FROM_ALL会读取环境里面的值
+# ... 为文件列表
 macro(php_m_add_library name)
    cmake_parse_arguments(PHP_ARG
       "SHARED;BUILDTREE_ONLY"
@@ -439,8 +440,7 @@ macro(php_m_add_library name)
       set_property(GLOBAL APPEND PROPERTY PHP_EXPORTS_BUILDTREE_ONLY ${name})
    endif()
    set_property(GLOBAL APPEND PROPERTY PHP_EXPORTS ${name})
-endif()
-set_target_properties(${name} PROPERTIES FOLDER "Libraries")
+   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
 endmacro(php_m_add_library)
 
 macro(php_m_add_loadable_module)
@@ -452,7 +452,7 @@ endmacro()
 # PHP_TEMP_EXCLUDE_FROM_ALL
 macro(php_m_add_executable name)
    cmake_parse_arguments(PHP_ARG "" "" "" ${ARGN})
-   llvm_process_sources(ALL_FILES ${PHP_ARG_UNPARSED_ARGUMENTS})
+   php_process_sources(ALL_FILES ${PHP_ARG_UNPARSED_ARGUMENTS})
    # Generate objlib
    if(PHP_TEMP_ENABLE_OBJLIB)
       # Generate an obj library for both targets.
@@ -511,7 +511,7 @@ macro(php_m_add_definitions)
       endif(DEFINED PHP_DEFINITIONS)
    endforeach()
    add_definitions(${ARGN})
-endmacro(PHP_M_ADD_DEFINITIONS)
+endmacro(php_m_add_definitions)
 
 
 macro(php_m_add_target target_name)
