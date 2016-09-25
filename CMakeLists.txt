@@ -120,12 +120,11 @@ set_property(GLOBAL PROPERTY PHP_I_DISPLAY_FILES)
 include(PhpDetectRequirePackages)
 include(PhpCheckRequireHeaders)
 
-
 # 探测系统编译环境
 
 # 配置相关系统
 configure_file("${CMAKE_SOURCE_DIR}/php_prefix.h.cmake" "${CMAKE_BINARY_DIR}/include/php_prefix.h")
-configure_file("${CMAKE_SOURCE_DIR}/php_compiler.h.cmake" "${CMAKE_BINARY_DIR}/include/php_compiler.h")
+configure_file("${CMAKE_SOURCE_DIR}/php_host_env.h.cmake" "${CMAKE_BINARY_DIR}/include/php_host_env.h")
 configure_file("${CMAKE_SOURCE_DIR}/php_config.h.cmake" "${CMAKE_BINARY_DIR}/include/php_config.h")
 
 # 设置标准的输出目录

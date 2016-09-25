@@ -15,3 +15,41 @@
    | Authors: zzu_softboy <zzu_softboy@163.com>                           |
    +----------------------------------------------------------------------+
 */
+
+#ifndef PHP_KERNEL_CLI_TERMINAL_H
+#define PHP_KERNEL_CLI_TERMINAL_H
+
+#include <utility>
+#include <map>
+
+namespace php{
+namespace kernel{
+namespace io{
+
+enum class TerminalColor
+{
+   Default,
+   Black,
+   Red,
+   Green,
+   Yellow,
+   Blue,
+   Magenta,
+   Cyan,
+   LightGray,
+   DarkGray,
+   LightRed,
+   LightGreen,
+   LightYellow,
+   LightBlue,
+   LightMagenta,
+   LightCyan,
+   White
+};
+
+
+}//io
+}//kernel
+}//php
+
+#endif //PHP_KERNEL_CLI_TERMINAL_H
