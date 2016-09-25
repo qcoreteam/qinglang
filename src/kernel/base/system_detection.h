@@ -1,4 +1,4 @@
-/*
+/**
    +----------------------------------------------------------------------+
    | PHP Version 7                                                        |
    +----------------------------------------------------------------------+
@@ -18,7 +18,7 @@
 #ifndef PHP_KERNEL_BASE_SYSTEM_DETECTION_H
 #define PHP_KERNEL_BASE_SYSTEM_DETECTION_H
 
-/**
+/*
      php++ 支持的操作系统必须是一下的其中一种
      MACOS -- macOS
      LINUX    - Linux [has variants]
