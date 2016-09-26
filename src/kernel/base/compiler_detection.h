@@ -1216,6 +1216,112 @@
 /*
  * Warning/diagnostic handling
  */
+#define PHP_DO_PRAGMA(text) _Pragma(#text)
+#if defined(PHP_CC_INTEL) && defined(PHP_CC_MSVC)
+#  undef PHP_DO_PRAGMA
+#  define PHP_WARNING_PUSH                    __pragma(warning(push))
+#  define PHP_WARNING_POP                     __pragma(warning(pop))
+#  define PHP_WARNING_DISABLE_MSVC(number) 
+#  define PHP_WARNING_DISABLE_INTEL(number)   __pragma(warning(disable: number))
+#  define PHP_WARNING_DISABLE_CLANG(text)
+#  define PHP_WARNING_DISABLE_GCC(text)
+#elif defined(PHP_CC_INTEL)
+// icc: Intel compiler on Linux or OS X
+#  define PHP_WARNING_PUSH                    PHP_DO_PRAGMA(warning(push))
+#  define PHP_WRANING_POP                     PHP_DO_PRAGMA(warning(pop))
+#  define PHP_WARNING_DISABLE_INTEL(number)   PHP_DO_PRAGMA(disable: number)
+#  define PHP_WARNING_DISABLE_MSVC(number) 
+#  define PHP_WARNING_DISABLE_CLANG(text)
+#  define PHP_WARNING_DISABLE_GCC(text)
+#elif defined(PHP_CC_MSCV) && _MSC_VER >= 1500 && !defined(PHP_CC_CLANG)
+#  undef PHP_DO_PRAGMA
+#  define PHP_WARNING_PUSH                    __pragma(warning(push))
+#  define PHP_WARNING_POP                     __pragma(warning(pop))
+#  define PHP_WARNING_DISABLE_MSVC(number)    __pragma(warning(disable: number))
+#  define PHP_WARNING_DISABLE_INTEL(number)   
+#  define PHP_WARNING_DISABLE_CLANG(text)
+#  define PHP_WARNING_DISABLE_GCC(text)
+#elif defined(PHP_CC_CLANG)
+#  define PHP_WARNING_PUSH                    PHP_DO_PRAGMA(clang diagnostic push)
+#  define PHP_WRANING_POP                     PHP_DO_PRAGMA(clang diagnostic pop)
+#  define PHP_WARNING_DISABLE_CLANG(text)     PHP_DO_PRAGMA(clang diagnostic ignored text)
+#  define PHP_WARNING_DISABLE_GCC(text)
+#  define PHP_WARNING_DISABLE_INTEL(number)   
+#  define PHP_WARNING_DISABLE_MSVC(number) 
+#elif defined(PHP_CC_GNU) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406)
+#  define PHP_WARNING_PUSH                    PHP_DO_PRAGMA(GCC diagnostic push)
+#  define PHP_WRANING_POP                     PHP_DO_PRAGMA(GCC diagnostic pop)
+#  define PHP_WARNING_DISABLE_GCC(text)       PHP_DO_PRAGMA(GCC diagnostic ignored text)
+#  define PHP_WARNING_DISABLE_CLANG(text)
+#  define PHP_WARNING_DISABLE_INTEL(number)   
+#  define PHP_WARNING_DISABLE_MSVC(number) 
+#else
+// All other compilers, GCC < 4.6 and MSVC < 2008
+#  define PHP_WARNING_PUSH
+#  define PHP_WARNING_POP
+#  define PHP_WARNING_DISABLE_INTEL(number)
+#  define PHP_WARNING_DISABLE_MSVC(number)
+#  define PHP_WARNING_DISABLE_CLANG(text)
+#  define PHP_WARNING_DISABLE_GCC(text)
+#endif // defined(PHP_CC_INTEL) && defined(PHP_CC_MSVC)
 
+/*
+   Proper for-scoping in MIPSpro CC
+*/
+#ifndef PHP_NO_KEYWORDS
+#  if defined(PHP_CC_MIPS) || (defined(PHP_CC_HPACC) && defined(__ia64))
+#     define for if(0) {} else for
+#  endif
+#endif
+
+#ifdef PHP_COMPILER_RVALUE_REFS
+#  define php_move(x) std::move(x)
+#else
+#  define php_move(x) (x)
+#endif
+
+#define PHP_UNREACHABLE() \
+    do {\
+        PHP_ASSERT_X(false, "PHP_UNREACHABLE()", "PHP_UNREACHABLE was reached");\
+        PHP_UNREACHABLE_IMPL();\
+    } while (0)
+
+#define PHP_ASSUME(Expr) \
+    do {\
+        const bool valueOfExpression = Expr;\
+        PHP_ASSERT_X(valueOfExpression, "PHP_ASSUME()", "Assumption in PHP_ASSUME(\"" #Expr "\") was not correct");\
+        PHP_ASSUME_IMPL(valueOfExpression);\
+    } while (0)
+
+#if PHP_HAS_CPP_ATTRIBUTE(fallthrough)
+#  define PHP_FALLTHROUGH() [[fallthrough]]
+#elif defined(__cplusplus)
+/* Clang can not parse namespaced attributes in C mode, but defines __has_cpp_attribute */
+#  if PHP_HAS_CPP_ATTRIBUTE(clang::fallthrough)
+#    define PHP_FALLTHROUGH() [[clang::fallthrough]]
+#  endif
+#endif
+#ifndef PHP_FALLTHROUGH
+#  define PHP_FALLTHROUGH() (void)0
+#endif
+/*
+    Sanitize compiler feature availability
+*/
+#if !defined(PHP_PROCESSOR_X86)
+#  undef PHP_COMPILER_SUPPORTS_SSE2
+#  undef PHP_COMPILER_SUPPORTS_SSE3
+#  undef PHP_COMPILER_SUPPORTS_SSSE3
+#  undef PHP_COMPILER_SUPPORTS_SSE4_1
+#  undef PHP_COMPILER_SUPPORTS_SSE4_2
+#  undef PHP_COMPILER_SUPPORTS_AVX
+#  undef PHP_COMPILER_SUPPORTS_AVX2
+#endif
+#if !defined(PHP_PROCESSOR_ARM)
+#  undef PHP_COMPILER_SUPPORTS_NEON
+#endif
+#if !defined(PHP_PROCESSOR_MIPS)
+#  undef PHP_COMPILER_SUPPORTS_MIPS_DSP
+#  undef PHP_COMPILER_SUPPORTS_MIPS_DSPR2
+#endif
 
 #endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H 
