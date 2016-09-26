@@ -470,4 +470,145 @@
 #  error "php++ has not been tested with this compiler"
 #endif // defined(__DMC__) || defined(__SC__) 
 
+/*
+ * C++11 support
+ *
+ *  Paper           Macro                               SD-6 macro
+ *  N2341           PHP_COMPILER_ALIGNAS
+ *  N2341           PHP_COMPILER_ALIGNOF
+ *  N2427           PHP_COMPILER_ATOMICS
+ *  N2761           PHP_COMPILER_ATTRIBUTES               __cpp_attributes = 200809
+ *  N2541           PHP_COMPILER_AUTO_FUNCTION
+ *  N1984 N2546     PHP_COMPILER_AUTO_TYPE
+ *  N2437           PHP_COMPILER_CLASS_ENUM
+ *  N2235           PHP_COMPILER_CONSTEXPR                __cpp_constexpr = 200704
+ *  N2343 N3276     PHP_COMPILER_DECLTYPE                 __cpp_decltype = 200707
+ *  N2346           PHP_COMPILER_DEFAULT_MEMBERS
+ *  N2346           PHP_COMPILER_DELETE_MEMBERS
+ *  N1986           PHP_COMPILER_DELEGATING_CONSTRUCTORS
+ *  N2437           PHP_COMPILER_EXPLICIT_CONVERSIONS
+ *  N3206 N3272     PHP_COMPILER_EXPLICIT_OVERRIDES
+ *  N1987           PHP_COMPILER_EXTERN_TEMPLATES
+ *  N2540           PHP_COMPILER_INHERITING_CONSTRUCTORS
+ *  N2672           PHP_COMPILER_INITIALIZER_LISTS
+ *  N2658 N2927     PHP_COMPILER_LAMBDA                   __cpp_lambdas = 200907
+ *  N2756           PHP_COMPILER_NONSTATIC_MEMBER_INIT
+ *  N2855 N3050     PHP_COMPILER_NOEXCEPT
+ *  N2431           PHP_COMPILER_NULLPTR
+ *  N2930           PHP_COMPILER_RANGE_FOR
+ *  N2442           PHP_COMPILER_RAW_STRINGS              __cpp_raw_strings = 200710
+ *  N2439           PHP_COMPILER_REF_QUALIFIERS
+ *  N2118 N2844 N3053 PHP_COMPILER_RVALUE_REFS            __cpp_rvalue_references = 200610
+ *  N1720           PHP_COMPILER_STATIC_ASSERT            __cpp_static_assert = 200410
+ *  N2258           PHP_COMPILER_TEMPLATE_ALIAS
+ *  N2659           PHP_COMPILER_THREAD_LOCAL
+ *  N2660           PHP_COMPILER_THREADSAFE_STATICS
+ *  N2765           PHP_COMPILER_UDL                      __cpp_user_defined_literals = 200809
+ *  N2442           PHP_COMPILER_UNICODE_STRINGS          __cpp_unicode_literals = 200710
+ *  N2640           PHP_COMPILER_UNIFORM_INIT
+ *  N2544           PHP_COMPILER_UNRESTRICTED_UNIONS
+ *  N1653           PHP_COMPILER_VARIADIC_MACROS
+ *  N2242 N2555     PHP_COMPILER_VARIADIC_TEMPLATES       __cpp_variadic_templates = 200704
+ *
+ * For any future version of the C++ standard, we use only the SD-6 macro.
+ * For full listing, see
+ *  http://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations
+ *
+ * C++ extensions:
+ *  PHP_COMPILER_RESTRICTED_VLA       variable-length arrays, prior to __cpp_runtime_arrays
+ */
+#if defined(__cplusplus)
+#  if __cplusplus < 201103L && !(defined(PHP_CC_MSVC) && PHP_CC_MSVC > 1800)
+#      error "php++ requires a C++11 compiler and yours does not seem to be that."
+#  endif
+#endif // defined(__cplusplus)
+
+#if defined(PHP_CC_INTEL)
+#  define PHP_COMPILER_RESTRICTED_VLA
+#  define PHP_COMPILER_VARIADIC_MACROS
+#  define PHP_COMPILER_THREADSAFE_STATICS
+#  if __INTEL_COMPILER < 1200
+#     define PHP_NO_TEMPLATE_FRIENDS
+#  endif
+#  if __INTEL_COMPILER >= 1300 && !defined(_WIN32)
+//    ICC supports C++14 binary literals in C, C++98, and C++11 modes
+//    at least since 13.1, but I can't test further back
+#     define PHP_COMPILER_BINARY_LITERALS
+#  endif
+#  if __cplusplus >= 201103L || defined(__INTEL_CXX11_MODE__)
+#     if __INTEL_COMPILER >= 1200
+#        define PHP_COMPILER_AUTO_TYPE
+#        define PHP_COMPILER_CLASS_ENUM
+#        define PHP_COMPILER_DECLTYPE
+#        define PHP_COMPILER_DEFAULT_MEMBERS
+#        define PHP_COMPILER_DELETE_MEMBERS
+#        define PHP_COMPILER_EXTERN_TEMPLATES
+#        define PHP_COMPILER_LAMBDA
+#        define PHP_COMPILER_RVALUE_REFS
+#        define PHP_COMPILER_STATIC_ASSERT
+#        define PHP_COMPILER_VARIADIC_MACROS
+#     endif // __INTEL_COMPILER >= 1200
+#     if __INTEL_COMPILER > 1210
+#        define PHP_COMPILER_ATTRIBUTES
+#        define PHP_COMPILER_AUTO_FUNCTION
+#        define PHP_COMPILER_NULLPTR
+#        define PHP_COMPILER_TEMPLATE_ALIAS
+#        if !defined(_CHAR16T) // msvc headers
+#           define PHP_COMPILER_UNICODE_STRINGS
+#        endif
+#        define PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif // __INTEL_COMPILER > 1210
+#     if __INTEL_COMPILER > 1300
+//       constexpr support is only partial
+//#      define PHP_COMPILER_CONSTEXPR
+#        define PHP_COMPILER_INITIALIZER_LISTS
+#        define PHP_COMPILER_UNIFORM_INIT
+#        define PHP_COMPILER_NOEXCEPT
+#     endif // __INTEL_COMPILER > 1300
+#     if __INTEL_COMPILER > 1400
+//       Intel issue ID 6000056211, bug DPD200534796
+//#      define Q_COMPILER_CONSTEXPR
+#        define PHP_COMPILER_DELEGATING_CONSTRUCTORS
+#        define PHP_COMPILER_EXPLICIT_CONVERSIONS
+#        define PHP_COMPILER_EXPLICIT_OVERRIDES
+#        define PHP_COMPILER_NONSTATIC_MEMBER_INIT
+#        define PHP_COMPILER_RANGE_FOR
+#        define PHP_COMPILER_RAW_STRINGS
+#        define PHP_COMPILER_REF_QUALIFIERS
+#        define PHP_COMPILER_UNICODE_STRINGS
+#        define PHP_COMPILER_UNRESTRICTED_UNIONS
+#     endif // __INTEL_COMPILER > 1400
+#     if __INTEL_COMPILER > 1500
+#        if __INTEL_COMPILER * 100 + __INTEL_COMPILER_UPDATE >= 150001
+//       the bug mentioned above is fixed in 15.0.1
+#           define PHP_COMPILER_CONSTEXPR
+#        endif
+#        define PHP_COMPILER_ALIGNAS
+#        define PHP_COMPILER_ALIGNOF
+#        define PHP_COMPILER_INHERITING_CONSTRUCTORS
+#        if !defined(PHP_OS_OSX)
+//       C++11 thread_local is broken on OS X (Clang doesn't support it either)
+#           define PHP_COMPILER_THREAD_LOCAL
+#        endif
+#        define PHP_COMPILER_UDL
+#     endif
+#     if defined(_MSC_VER)
+#        if _MSC_VER == 1700
+//       <initializer_list> is missing with MSVC 2012 (it's present in 2010, 2013 and up)
+#           undef PHP_COMPILER_INITIALIZER_LISTS      
+#        endif
+#        if _MSC_VER < 1900
+//       ICC disables unicode string support when compatibility mode with MSVC 2013 or lower is active
+#           undef PHP_COMPILER_UNICODE_STRINGS
+//       Even though ICC knows about ref-qualified members, MSVC 2013 or lower doesn't, so
+//       certain member functions may be missing from the DLLs.
+#           undef PHP_COMPILER_REF_QUALIFIERS
+//       Disable constexpr unless the MS headers have constexpr in all the right places too
+//       (like std::numeric_limits<T>::max())
+#           undef PHP_COMPILER_CONSTEXPR
+#        endif
+#     endif
+#  endif // __cplusplus >= 201103L || defined(__INTEL_CXX11_MODE__)
+#endif // defined(PHP_CC_INTEL)
+
 #endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
