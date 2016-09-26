@@ -948,4 +948,65 @@
 #  endif // __cplusplus
 #endif // defined(PHP_CC_MSVC) && !defined(PHP_CC_INTEL)
 
+#if defined(__cplusplus)
+#include <utility>
+#  if (defined(PHP_CC_CLANG) || defined(PHP_CC_INTEL)) && defined(__GNUC_LIBSTD__) \
+      || ((__GNU_LIBSTD__-0) * 100 + __GNU_LIBSTD_MINOR__-0 <= 402)
+// Apple has not updated libstdc++ since 2007, which means it does not have
+// <initializer_list> or std::move. Let's disable these features
+#     undef PHP_COMPILER_INITIALIZER_LISTS
+#     undef PHP_COMPILER_RVALUE_REFS
+#     undef PHP_COMPILER_REF_QUALIFIERS
+// Also disable <atomic>, since it's clearly not there
+#     undef PHP_COMPILER_ATOMICS
+#  endif
+#  if defined(PHP_CC_CLANG) && defined(PHP_CC_INTEL) && PHP_CC_INTEL >= 1500
+// ICC 15.x and 16.0 have their own implementation of std::atomic, which is activated when in Clang mode
+// (probably because libc++'s <atomic> on OS X failed to compile), but they're missing some
+// critical definitions. (Reported as Intel Issue ID 6000117277)
+#     define __USE_CONSTEXPR 1
+#     define __USE_NOEXCEPT 1
+#  elif defined(PHP_CC_MSVC) && (defined(PHP_CC_CLANG) || defined(PHP_CC_INTEL))
+// Clang and the Intel compiler support more C++ features than the Microsoft compiler
+// so make sure we don't enable them if the MS headers aren't properly adapted.
+#     ifndef _HAS_CONSTEXPR
+#        undef PHP_COMPILER_CONSTEXPR
+#     endif
+#     ifndef _HAS_DECLTYPE
+#        undef PHP_COMPILER_DECLTYPE
+#     endif
+#     ifndef _HAS_INITIALIZER_LISTS
+#        undef PHP_COMPILER_INITIALIZER_LISTS
+#     endif
+#     ifndef _HAS_NULLPTR_T
+#        undef PHP_COMPILER_NULLPTR
+#     endif
+#     ifndef _HAS_RVALUE_REFERENCES
+#        undef PHP_COMPILER_RVALUE_REFS
+#     endif
+#     ifndef _HAS_SCOPED_ENUM
+#        undef PHP_COMPILER_CLASS_ENUM
+#     endif
+#     ifndef _HAS_TEMPLATE_ALIAS
+#        undef PHP_COMPILER_TEMPLATE_ALIAS
+#     endif
+#     ifndef _HAS_VARIADIC_TEMPLATES
+#        undef PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif
+#  elif defined(_LIBCPP_VERSION)
+// libc++ uses __has_feature(cxx_atomic), so disable the feature if the compiler
+// doesn't support it. That's required for the Intel compiler 14.x or earlier on OS X, for example.
+#     if !__has_feature(cxx_atomic)
+#        undef PHP_COMPILER_ATOMICS
+#     endif
+#  endif
+#  if defined(PHP_COMPILER_THREADSAFE_STATICS) && defined(PHP_OS_MAC)
+// Apple's low-level implementation of the C++ support library
+// (libc++abi.dylib, shared between libstdc++ and libc++) has deadlocks. The
+// C++11 standard requires the deadlocks to be removed, so this will eventually
+// be fixed; for now, let's disable this.
+#     undef PHP_COMPILER_THREADSAFE_STATICS
+#  endif
+#endif // defined(__cplusplus)
+
 #endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
