@@ -1009,4 +1009,213 @@
 #  endif
 #endif // defined(__cplusplus)
 
-#endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
+/*
+ * C++11 keywords and expressions
+ */
+#ifdef PHP_COMPILER_NULLPTR
+#  define PHP_NULLPTR nullptr
+#else 
+#  define PHP_NULLPTR NULL
+#endif
+
+#ifdef PHP_COMPILER_DEFAULT_MEMBERS
+#  define PHP_DECL_EQ_DEFAULT = default
+#else
+#  define PHP_DECL_EQ_DEFAULT 
+#endif
+
+#ifdef PHP_COMPILER_DELETE_MEMBERS
+#  define PHP_DECL_EQ_DELETE = delete
+#else
+#  define PHP_DECL_EQ_DELETE 
+#endif
+
+// Don't break code that is already using PHP_COMPILER_DEFAULT_DELETE_MEMBERS
+#if defined(PHP_COMPILER_DEFAULT_MEMBERS) && defined(PHP_COMPILER_DELETE_MEMBERS)
+#  define PHP_COMPILER_DEFAULT_DELETE_MEMBERS
+#endif
+
+#if defined(PHP_COMPILER_CONSTEXPR)
+#  if defined(__cpp_constexpr) && __cpp_constexpr-0 >= 201304
+#     define PHP_DECL_CONSTEXPR constexpr
+#     define PHP_DECL_RELAXED_CONSTEXPR constexpr
+#     define PHP_CONSTEXPR constexpr
+#     define PHP_RELAXED_CONSTEXPR constexpr
+#  else
+#     define PHP_DECL_CONSTEXPR constexpr
+#     define PHP_DECL_RELAXED_CONSTEXPR
+#     define PHP_CONSTEXPR constexpr
+#     define PHP_RELAXED_CONSTEXPR const
+#  endif
+#else
+#  define PHP_DECL_CONSTEXPR
+#  define PHP_DECL_RELAXED_CONSTEXPR
+#  define PHP_CONSTEXPR const
+#  define PHP_RELAXED_CONSTEXPR const
+#endif
+
+#ifdef PHP_COMPILER_EXPLICIT_OVERRIDES
+#  define PHP_DECL_OVERRIDE override
+#  define PHP_DECL_FINAL final
+#else
+#  ifndef PHP_DECL_OVERRIDE
+#     define PHP_DECL_OVERRIDE
+#  endif
+#  ifndef PHP_DECL_FINAL
+#     define PHP_DECL_FINAL
+#  endif
+#endif
+
+#ifdef PHP_COMPILER_NOEXCEPT
+#  define PHP_DECL_NOEXCEPT noexcept
+#  define PHP_DECL_NOEXCEPT_EXPR(x) noexcept(x)
+#  ifdef PHP_DECL_NOTHROW
+#     undef PHP_DECL_NOTHROW // override with C++11 noexcept if available
+#  endif
+#else
+#  define PHP_DECL_NOEXCEPT
+#  define PHP_DECL_NOEXCEPT_EXPR(x)
+#endif
+
+#ifndef PHP_DECL_NOTHROW
+#  define PHP_DECL_NOTHROW PHP_DECL_NOEXCEPT
+#endif
+
+#if defined(PHP_COMPILER_ALIGNOF)
+#  undef PHP_ALIGNOF
+#  define PHP_ALIGNOF(x) alignof(x)
+#endif
+
+#if defined(PHP_COMPILER_ALIGNAS)
+#  undef PHP_DECL_ALIGN
+#  undef PHP_DECL_ALIGN(n) alignas(n)
+#endif
+
+/*
+ * Fallback macros to certain compiler features
+ */
+#ifndef PHP_NORETURN
+#  define PHP_NORETURN
+#endif
+
+#ifndef PHP_LIKELY
+#  define PHP_LIKELY(x) (x)
+#endif
+
+#ifndef PHP_UNLIKELY
+#  define PHP_UNLIKELY(x) (x)
+#endif
+
+#ifndef PHP_ASSUME_IMPL
+#  define PHP_ASSUME_IMPL(expr)  php_noop()
+#endif
+
+#ifndef PHP_UNREACHABLE_IMPL
+#  define PHP_UNREACHABLE_IMPL() php_noop()
+#endif
+
+#ifndef PHP_ALLOC_SIZE
+#  define PHP_ALLOC_SIZE(x)
+#endif
+
+#ifndef PHP_REQUIRED_RESULT
+#  define PHP_REQUIRED_RESULT
+#endif
+
+#ifndef PHP_DECL_DEPRECATED
+#  define PHP_DECL_DEPRECATED
+#endif
+
+#ifndef PHP_DECL_VARIABLE_DEPRECATED
+#  define PHP_DECL_VARIABLE_DEPRECATED PHP_DECL_DEPRECATED
+#endif
+
+#ifndef PHP_DECL_DEPRECATED_X
+#  define PHP_DECL_DEPRECATED_X(text) PHP_DECL_DEPRECATED
+#endif
+
+#ifndef PHP_DECL_EXPORT
+#  define PHP_DECL_EXPORT
+#endif
+
+#ifndef PHP_DECL_IMPORT
+#  define PHP_DECL_IMPORT
+#endif
+
+#ifndef PHP_DECL_HIDDEN
+#  define PHP_DECL_HIDDEN
+#endif
+
+#ifndef PHP_DECL_UNUSED
+#  define PHP_DECL_UNUSED
+#endif
+
+#ifndef PHP_DECL_UNUSED_MEMBER
+#  define PHP_DECL_UNUSED_MEMBER
+#endif
+
+#ifndef PHP_FUNC_INFO
+#  if defined(PHP_OS_SOLARIS) || defined(PHP_CC_XLC)
+#     define PHP_FUNC_INFO __FILE__ "(line number unavailable)"
+#  else
+#     define PHP_FUNC_INFO __FILE__ ":" PHP_STRINGIFY(__LINE__)
+#  endif
+#endif
+
+#ifndef PHP_DECL_CF_RETURNS_RETAINED
+#  define PHP_DECL_CF_RETURNS_RETAINED
+#endif
+
+#ifndef PHP_DECL_NS_RETURNS_AUTORELEASED
+#  define PHP_DECL_NS_RETURNS_AUTORELEASED
+#endif
+
+#ifndef PHP_DECL_PURE_FUNCTION
+#  define PHP_DECL_PURE_FUNCTION
+#endif
+
+#ifndef PHP_DECL_CONST_FUNCTION
+#  define PHP_DECL_CONST_FUNCTION PHP_DECL_PURE_FUNCTION
+#endif
+
+/*
+ * SG10's SD-6 feature detection and some useful extensions from Clang and GCC
+ * https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations
+ * http://clang.llvm.org/docs/LanguageExtensions.html#feature-checking-macros
+ */
+#ifdef __has_builtin
+#  define PHP_HAS_BUILTIN(x) __has_builtin(x)
+#else
+#  define PHP_HAS_BUILTIN 0
+#endif
+
+#ifdef __has_attribute
+#  define PHP_HAS_ATTRIBUTE(x) __has_attribute(x)
+#else
+#  define PHP_HAS_ATTRIBUTE(x) 0
+#endif
+
+#ifdef __has_cpp_attribute
+#  define PHP_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#else
+#  define PHP_HAS_CPP_ATTRIBUTE(x) 0
+#endif
+
+#ifdef __has_include
+#  define PHP_HAS_INCLUDE(x) __has_include(x)
+#else
+#  define PHP_HAS_INCLUDE(x) 0
+#endif
+
+#ifdef __has_include_next
+#  define PHP_HAS_INCLUDE_NEXT(x) __has_include_next(x)
+#else
+#  define PHP_HAS_INCLUDE_NEXT(x) 0
+#endif
+
+/*
+ * Warning/diagnostic handling
+ */
+
+
+#endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H 
