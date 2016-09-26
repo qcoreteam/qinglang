@@ -611,4 +611,162 @@
 #  endif // __cplusplus >= 201103L || defined(__INTEL_CXX11_MODE__)
 #endif // defined(PHP_CC_INTEL)
 
+
+#if defined(PHP_CC_CLANG) && !defined(PHP_CC_INTEL)
+// General C++ features
+#  define PHP_COMPILER_RESTRICTED_VLA
+#  define PHP_COMPILER_THREADSAFE_STATICS
+#  if __has_feature(attribute_deprecated_with_message)
+#     define PHP_DECL_DEPRECATED_X(text) __attribute__((__deprecated__(text)))
+#  endif
+
+// Clang supports binary literals in C, C++98 and C++11 modes
+// It's been supported "since the dawn of time itself" (cf. commit 179883)
+#  if __has_extension(cxx_binary_literals)
+#     define PHP_COMPILER_BINARY_LITERALS
+#  endif
+
+// Variadic macros are supported for gnu++98, c++11, c99 ... since 2.9
+#  if PHP_CC_CLANG >= 209
+#     if !defined(__STRICT_ANSI__) || defined(__GXX_EXPERIMENTAL_CXX0X__) \
+         || (defined(__cplusplus) && (__cplusplus >= 201103L)) \
+         || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
+#        define PHP_COMPILER_VARIADIC_MACROS
+#     endif
+#  endif
+
+/* C++11 features, see http://clang.llvm.org/cxx_status.html */
+#  if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+// Detect C++ features using __has_feature(), see http://clang.llvm.org/docs/LanguageExtensions.html#cxx11
+#     if __has_feature(cxx_alignas)
+#        define PHP_COMPILER_ALIGNAS
+#        define PHP_COMPILER_ALIGNOF
+#     endif
+#     if __has_feature(cxx_atomic) && __has_include(<atomic>)
+#        define PHP_COMPILER_ATOMICS
+#     endif
+#     if __has_feature(cxx_attributes)
+#        define PHP_COMPILER_ATTRIBUTES
+#     endif
+#     if __has_feature(cxx_auto_type)
+#        define PHP_COMPILER_AUTO_FUNCTION
+#        define PHP_COMPILER_AUTO_TYPE
+#     endif
+#     if __has_feature(cxx_strong_enums)
+#        define PHP_COMPILER_CLASS_ENUM
+#     endif
+// CLANG 3.2 has bad/partial support
+#     if __has_feature(cxx_constexpr) && PHP_CC_CLANG > 302
+#        define PHP_COMPILER_CONSTREXPR
+#     endif
+#     if __has_feature(cxx_decltype) /* && __has_feature(cxx_decltype_incomplete_return_types) */
+#        define PHP_COMPILER_DECLTYPE
+#     endif
+#     if __has_feature(cxx_defaulted_functions)
+#        define PHP_COMPILER_DEFAULT_MEMBERS
+#     endif
+#     if __has_feature(cxx_deleted_functions)
+#        define PHP_COMPILER_DELETE_MEMBERS
+#     endif
+#     if __has_feature(cxx_delegating_constructors)
+#        define PHP_COMPILER_DELEGATING_CONSTRUCTORS
+#     endif
+#     if __has_feature(cxx_explicit_conversions)
+#        define PHP_COMPILER_EXPLICIT_CONVERSIONS
+#     endif
+#     if __has_feature(cxx_override_control)
+#        define PHP_COMPILER_EXPLICIT_OVERRIDES
+#     endif
+#     if __has_feature(cxx_inheriting_constructors)
+#        define PHP_COMPILER_INHERITING_CONSTRUCTORS
+#     endif
+#     if __has_feature(cxx_generalized_initializers)
+#        define PHP_COMPILER_INITIALIZER_LISTS
+#        define PHP_COMPILER_UNIFORM_INIT // both covered by this feature macro, according to docs
+#     endif
+#     if __has_feature(cxx_lambdas)
+#        define PHP_COMPILER_LAMBDA
+#     endif
+#     if __has_feature(cxx_noexcept)
+#        define PHP_COMPILER_NOEXCEPT
+#     endif
+#     if __has_feature(cxx_nonstatic_member_init)
+#        define PHP_COMPILER_NONSTATIC_MEMBER_INIT
+#     endif
+#     if __has_feature(cxx_nullptr)
+#        define PHP_COMPILER_NULLPTR
+#     endif
+#     if __has_feature(cxx_range_for)
+#        define PHP_COMPILER_RANGE_FOR
+#     endif
+#     if __has_feature(cxx_raw_string_literals)
+#        define PHP_COMPILER_RAW_STRINGS
+#     endif
+#     if __has_feature(cxx_reference_qualified_functions)
+#        define PHP_COMPILER_REF_QUALIFIERS
+#     endif
+#     if __has_feature(cxx_rvalue_references)
+#        define PHP_COMPILER_RVALUE_REFS
+#     endif
+#     if __has_feature(cxx_static_assert)
+#        define PHP_COMPILER_STATIC_ASSERT
+#     endif
+#     if __has_feature(cxx_alias_templates)
+#        define PHP_COMPILER_TEMPLATE_ALIAS
+#     endif
+#     if __has_feature(cxx_thread_local)
+#        if !defined(__FreeBSD__)
+#           define PHP_COMPILER_THREAD_LOCAL
+#        endif
+#     endif
+#     if __has_feature(cxx_user_literals)
+#        define PHP_COMPILER_UDL
+#     endif
+#     if __has_feature(cxx_unicode_literals)
+#        define PHP_COMPILER_UNICODE_STRINGS
+#     endif
+#     if __has_feature(cxx_unrestricted_unions)
+#        define PHP_COMPILER_UNRESTRICTED_UNIONS
+#     endif
+#     if __has_feature(cxx_variadic_templates)
+#        define PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif
+// Features that have no __has_feature() check
+#     if PHP_CC_CLANG >= 209 /*since clang 2.9 */
+#        define PHP_COMPILER_EXTERN_TEMPLATES
+#     endif
+#  endif
+
+/* C++1y features, deprecated macros. Do not update this list. */
+#  if __cplusplus > 201103L
+//#    if __has_feature(cxx_binary_literals)
+//#      define PHP_COMPILER_BINARY_LITERALS  // see above
+//#    endif
+#     if __has_feature(cxx_generic_lambda)
+#        define PHP_COMPILER_GENERIC_LAMBDA
+#     endif
+#     if __has_feature(cxx_init_capture)
+#        define PHP_COMPILER_LAMBDA_CAPTURES
+#     endif
+#     if __has_feature(cxx_relaxed_constexpr)
+#        define PHP_COMPILER_RELAXED_CONSTEXPR_FUNCTIONS
+#     endif
+#     if __has_feature(cxx_decltype_auto) && __has_feature(cxx_return_type_deduction)
+#        define PHP_COMPILER_RETURN_TYPE_DEDUCTION
+#     endif
+#     if __has_feature(cxx_variadic_templates)
+#        define PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif
+#     if __has_feature(cxx_runtime_array)
+#        define PHP_COMPILER_VLA
+#     endif
+#  endif // __cplusplus > 201103L
+
+#  if defined(__has_warning)
+#     if _has_warning("-Wunused-private-field")
+#        define PHP_DECL_UNUSED_MEMBER PHP_DECL_UNUSED
+#     endif
+#  endif
+#endif // defined(PHP_CC_CLANG) && !defined(PHP_CC_INTEL)
+
 #endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
