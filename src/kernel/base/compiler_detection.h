@@ -769,4 +769,183 @@
 #  endif
 #endif // defined(PHP_CC_CLANG) && !defined(PHP_CC_INTEL)
 
+#if defiend(PHP_CC_GNU) && !defined(PHP_CC_INTEL) && !defined(PHP_CC_CLANG)
+#  define PHP_COMPILER_RESTRICTED_VLA
+#  define PHP_COMPILER_THREADSAFE_STATICS
+#  if PHP_CC_GNU >= 403
+//   GCC supports binary literals in C, C++98 and C++11 modes
+#     define PHP_COMPILER_BINARY_LITERALS
+#  endif
+#  if !defined(__STRICT_ANSI__) || defined(__GXX_EXPERIMENTAL_CXX0X__) \
+      || (defined(__cplusplus) && (__cplusplus >= 201103L)) \
+      || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
+// Variadic macros are supported for gnu++98, c++11, C99 ... since forever (gcc 2.97)
+#     define PHP_COMPILER_VARIADIC_MACROS
+#  endif
+#  if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+#     if PHP_CC_GNU >= 403
+// C++11 features supported in GCC 4.3:
+#        define PHP_COMPILER_DECLTYPE
+#        define PHP_COMPILER_RVALUE_REFS
+#        define PHP_COMPILER_STATIC_ASSERT
+#     endif
+#     if PHP_CC_GNU >= 404
+// C++11 features supported in GCC 4.4:
+#        define PHP_COMPILER_AUTO_FUNCTION
+#        define PHP_COMPILER_AUTO_TYPE
+#        define PHP_COMPILER_EXTERN_TEMPLATES
+#        define PHP_COMPILER_UNIFORM_INIT
+#        define PHP_COMPILER_UNICODE_STRINGS
+#        define PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif
+#     if PHP_CC_GNU >= 405
+// C++11 features supported in GCC 4.5:
+#        define PHP_COMPILER_EXPLICIT_CONVERSIONS
+/* GCC 4.4 implements initializer_list but does not define typedefs required
+  * by the standard. */
+#        define PHP_COMPILER_INITIALIZER_LISTS
+#        define PHP_COMPILER_LAMBDA
+#        define PHP_COMPILER_RAW_STRINGS
+#        define PHP_COMPILER_CLASS_ENUM
+#     endif
+#     if PHP_CC_GNU >= 406
+/* Pre-4.6 compilers implement a non-final snapshot of N2346, hence default and delete
+  * functions are supported only if they are public. Starting from 4.6, GCC handles
+  * final version - the access modifier is not relevant. */
+#        define PHP_COMPILER_DEFAULT_MEMBERS
+#        define PHP_COMPILER_DELETE_MEMBERS
+// C++11 features supported in GCC 4.6:
+#        define PHP_COMPILER_CONSTEXPR
+#        define PHP_COMPILER_NULLPTR
+#        define PHP_COMPILER_UNRESTRICTED_UNIONS
+#        define PHP_COMPILER_RANGE_FOR
+#     endif
+#     if PHP_CC_GNU >= 407
+/* GCC 4.4 implemented <atomic> and std::atomic using its old intrinsics.
+  * However, the implementation is incomplete for most platforms until GCC 4.7:
+  * instead, std::atomic would use an external lock. Since we need an std::atomic
+  * that is behavior-compatible with QBasicAtomic, we only enable it here */
+#        define PHP_COMPILER_ATOMICS
+/* GCC 4.6.x has problems dealing with noexcept expressions,
+  * so turn the feature on for 4.7 and above, only */
+#        define PHP_COMPILER_NOEXCEPT
+// C++11 features supported in GCC 4.7:
+#        define PHP_COMPILER_NONSTATIC_MEMBER_INIT
+#        define PHP_COMPILER_DELEGATING_CONSTRUCTORS
+#        define PHP_COMPILER_EXPLICIT_OVERRIDES
+#        define PHP_COMPILER_TEMPLATE_ALIAS
+#        define PHP_COMPILER_UDL
+#     endif
+#     if PHP_CC_GNU >= 408
+#        define PHP_COMPILER_ATTRIBUTES
+#        define PHP_COMPILER_ALIGNAS
+#        define PHP_COMPILER_ALIGNOF
+#        define PHP_COMPILER_INHERITING_CONSTRUCTORS
+#        define PHP_COMPILER_THREAD_LOCAL
+#        if PHP_CC_GNU > 408 || __GNUC_PATCHLEVEL__ >= 1
+#           define PHP_COMPILER_REF_QUALIFIERS
+#        endif
+#     endif
+// C++11 features are complete as of GCC 4.8.1
+#  endif // defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+#  if __cplusplus > 201103L
+#     if PHP_CC_GNU >= 409
+/* C++1y features in GCC 4.9 - deprecated, do not update this list */
+//#    define PHP_COMPILER_BINARY_LITERALS   // already supported since GCC 4.3 as an extension
+#        define PHP_COMPILER_LAMBDA_CAPTURES
+#        define PHP_COMPILER_RETURN_TYPE_DEDUCTION
+#     endif
+#  endif // __cplusplus > 201103L
+#endif // defiend(PHP_CC_GNU) && !defined(PHP_CC_INTEL) && !defined(PHP_CC_CLANG)
+
+#if defined(PHP_CC_MSVC) && !defined(PHP_CC_INTEL)
+#  if defined(__cplusplus)
+#     if _MSC_VER >= 1400
+// C++11 features supported in VC8 = VC2005:
+#        define PHP_COMPILER_VARIADIC_MACROS
+#        if !defined(__cplusplus_cli)
+/* 2005 supports the override and final contextual keywords, in
+ the same positions as the C++11 variants, but 'final' is
+ called 'sealed' instead:
+ http://msdn.microsoft.com/en-us/library/0w2w91tf%28v=vs.80%29.aspx
+ The behavior is slightly different in C++/CLI, which requires the
+ "virtual" keyword to be present too, so don't define for that.
+ So don't define Q_COMPILER_EXPLICIT_OVERRIDES (since it's not
+ the same as the C++11 version), but define the Q_DECL_* flags
+ accordingly: */
+#           define PHP_DECL_OVERRIDE override
+#           define PHP_DECL_FINAL sealed
+#        endif
+#     endif
+#     if _MSC_VER >= 1600
+// C++11 features supported in VC10 = VC2010:
+#        define PHP_COMPILER_AUTO_FUNCTION
+#        define PHP_COMPILER_AUTO_TYPE
+#        define PHP_COMPILER_DECLTYPE
+#        define PHP_COMPILER_EXTERN_TEMPLATES
+#        define PHP_COMPILER_LAMBDA
+#        define PHP_COMPILER_NULLPTR
+#        define PHP_COMPILER_RVALUE_REFS
+#        define PHP_COMPILER_STATIC_ASSERT
+//  MSVC's library has std::initializer_list, but the compiler does not support the braces initialization
+//#      define PHP_COMPILER_INITIALIZER_LISTS
+//#      define PHP_COMPILER_UNIFORM_INIT
+#     endif // _MSC_VER >= 1600
+#     if _MSC_VER >= 1700
+// C++11 features supported in VC11 = VC2012:
+#        undef PHP_DECL_OVERRIDE /* undo 2005/2008 settings... */
+#        undef PHP_DECL_FINAL  /* undo 2005/2008 settings... */
+#        define PHP_COMPILER_EXPLICIT_OVERRIDES /* ...and use std C++11 now   */
+#        define PHP_COMPILER_CLASS_ENUM
+#        define PHP_COMPILER_ATOMICS
+#     endif // VC 11
+#     if _MSC_VER >= 1800
+/* C++11 features in VC12 = VC2013 */
+/* Implemented, but can't be used on move special members */
+/* #      define Q_COMPILER_DEFAULT_MEMBERS */
+#       define PHP_COMPILER_DELETE_MEMBERS
+#       define PHP_COMPILER_DELEGATING_CONSTRUCTORS
+#       define PHP_COMPILER_EXPLICIT_CONVERSIONS
+#       define PHP_COMPILER_NONSTATIC_MEMBER_INIT
+// implemented, but nested initialization fails (eg tst_qvector): http://connect.microsoft.com/VisualStudio/feedback/details/800364/initializer-list-calls-object-destructor-twice
+//      #define PHP_COMPILER_INITIALIZER_LISTS
+// implemented in principle, but has a bug that makes it unusable: http://connect.microsoft.com/VisualStudio/feedback/details/802058/c-11-unified-initialization-fails-with-c-style-arrays
+//      #define PHP_COMPILER_UNIFORM_INIT
+#       define PHP_COMPILER_RAW_STRINGS
+#       define PHP_COMPILER_TEMPLATE_ALIAS
+#       define PHP_COMPILER_VARIADIC_TEMPLATES
+#     endif // VC 12
+#     if _MSC_FULL_VER >= 180030324 // VC 12 SP 2 RC
+#        define PHP_COMPILER_INITIALIZER_LISTS
+#     endif // VC 12 SP 2 RC
+#     if _MSC_VER >= 1900
+// C++11 features in VC14 = VC2015
+#        define PHP_COMPILER_DEFAULT_MEMBERS
+#        define PHP_COMPILER_ALIGNAS
+#        define PHP_COMPILER_ALIGNOF
+// Partial support, insufficient for Qt
+//#      define PHP_COMPILER_CONSTEXPR
+#        define PHP_COMPILER_INHERITING_CONSTRUCTORS
+#        define PHP_COMPILER_NOEXCEPT
+#        define PHP_COMPILER_RANGE_FOR
+#        define PHP_COMPILER_REF_QUALIFIERS
+#        define PHP_COMPILER_THREAD_LOCAL
+// Broken, see QTBUG-47224 and https://connect.microsoft.com/VisualStudio/feedback/details/1549785
+//#      define PHP_COMPILER_THREADSAFE_STATICS
+#        define PHP_COMPILER_UDL
+#        define PHP_COMPILER_UNICODE_STRINGS
+// Uniform initialization is not working yet -- build errors with QUuid
+//#      define PHP_COMPILER_UNIFORM_INIT
+#        define PHP_COMPILER_UNRESTRICTED_UNIONS
+#     endif // _MSC_VER >= 1900
+#     if _MSC_FULL_VER >= 190023419
+#        define PHP_COMPILER_ATTRIBUTES
+// Almost working, see https://connect.microsoft.com/VisualStudio/feedback/details/2011648
+//#      define PHP_COMPILER_CONSTEXPR
+#        define PHP_COMPILER_THREADSAFE_STATICS
+#        define PHP_COMPILER_UNIFORM_INIT
+#     endif // _MSC_FULL_VER >= 190023419
+#  endif // __cplusplus
+#endif // defined(PHP_CC_MSVC) && !defined(PHP_CC_INTEL)
+
 #endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
