@@ -518,7 +518,7 @@
  *  PHP_COMPILER_RESTRICTED_VLA       variable-length arrays, prior to __cpp_runtime_arrays
  */
 #if defined(__cplusplus)
-#  if __cplusplus < 201103L && !(defined(PHP_CC_MSVC) && PHP_CC_MSVC > 1800)
+#  if __cplusplus < 201103L && !(defined(PHP_CC_MSVC) && PHP_CC_MSVC >= 1800)
 #      error "php++ requires a C++11 compiler and yours does not seem to be that."
 #  endif
 #endif // defined(__cplusplus)
@@ -610,7 +610,6 @@
 #     endif
 #  endif // __cplusplus >= 201103L || defined(__INTEL_CXX11_MODE__)
 #endif // defined(PHP_CC_INTEL)
-
 
 #if defined(PHP_CC_CLANG) && !defined(PHP_CC_INTEL)
 // General C++ features
@@ -763,13 +762,13 @@
 #  endif // __cplusplus > 201103L
 
 #  if defined(__has_warning)
-#     if _has_warning("-Wunused-private-field")
+#     if __has_warning("-Wunused-private-field")
 #        define PHP_DECL_UNUSED_MEMBER PHP_DECL_UNUSED
 #     endif
 #  endif
 #endif // defined(PHP_CC_CLANG) && !defined(PHP_CC_INTEL)
 
-#if defiend(PHP_CC_GNU) && !defined(PHP_CC_INTEL) && !defined(PHP_CC_CLANG)
+#if defined(PHP_CC_GNU) && !defined(PHP_CC_INTEL) && !defined(PHP_CC_CLANG)
 #  define PHP_COMPILER_RESTRICTED_VLA
 #  define PHP_COMPILER_THREADSAFE_STATICS
 #  if PHP_CC_GNU >= 403

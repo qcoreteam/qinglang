@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-
+//#include <php/kernel/base/global.h>
 namespace 
 {
 TEST(KernelTests, ValueInit) {

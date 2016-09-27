@@ -68,22 +68,22 @@ configure_file(
    ${php_cmake_builddir}/PhpConfigVersion.cmake
    @ONLY)
 
-if (PHP_OPT_INSTALL_SUPPORT_FILES)
-   install(EXPORT PhpExports DESTINATION ${PHP_INSTALL_PACKAGE_DIR})
-   install(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/PhpConfig.cmake
-      ${php_cmake_builddir}/PhpConfigVersion.cmake
-      PhpCfgFuncs.cmake
-      DESTINATION ${PHP_INSTALL_PACKAGE_DIR})
+#if (PHP_OPT_INSTALL_SUPPORT_FILES)
+#   install(EXPORT PhpExports DESTINATION ${PHP_INSTALL_PACKAGE_DIR})
+#   install(FILES
+#      ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/PhpConfig.cmake
+#      ${php_cmake_builddir}/PhpConfigVersion.cmake
+#      PhpCfgFuncs.cmake
+#      DESTINATION ${PHP_INSTALL_PACKAGE_DIR})
    
-   install(DIRECTORY .
-      DESTINATION ${PHP_INSTALL_PACKAGE_DIR}
-      FILES_MATCHING PATTERN *.cmake
-      PATTERN .svn EXCLUDE
-      PATTERN PhpConfig.cmake EXCLUDE
-      PATTERN PhpConfigVersion.cmake EXCLUDE
-      PATTERN PhpCfgFuncs.cmake EXCLUDE)
-endif()
+#   install(DIRECTORY .
+#      DESTINATION ${PHP_INSTALL_PACKAGE_DIR}
+#      FILES_MATCHING PATTERN *.cmake
+#      PATTERN .svn EXCLUDE
+#      PATTERN PhpConfig.cmake EXCLUDE
+#      PATTERN PhpConfigVersion.cmake EXCLUDE
+#      PATTERN PhpCfgFuncs.cmake EXCLUDE)
+#endif()
 
 php_add_file_to_display_pool(
    PhpCfgFuncs.cmake

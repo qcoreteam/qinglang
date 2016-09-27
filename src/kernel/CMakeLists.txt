@@ -7,7 +7,9 @@ include(cli/files_register.cmake)
 include(mmgr/files_register.cmake)
 include(os/files_register.cmake)
 
-php_m_add_library(phpkernel ${PHP_KERNEL_LIB_SRCS})
+file(GLOB_RECURSE headers "${PHP_MAIN_INCLUDE_DIR}/php/kernel/*.h")
+
+php_m_add_library(phpkernel ${PHP_KERNEL_LIB_SRCS} ${headers})
 #add_library(phpkernel ${PHP_KERNEL_LIB_SRCS})
 # 文件安装
 

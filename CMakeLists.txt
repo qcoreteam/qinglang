@@ -71,17 +71,15 @@ elseif()
    option(PHP_ENABLE_ASSERTIONS "关闭assertions宏输出" OFF)
 endif()
 
-# 处理相关选项
-if(PHP_OPT_ENABLE_TEST)
-   find_package(GoogleTest)
-endif()
-
 # 全局的相关变量设置
 set(PHP_KERNEL_LIB_INCLUDES)
 set(PHP_LANG_INCLUDES)
 set(ZEND_ENGINE_INCLUDES)
+set(PHP_PTHREAD_LIB)
 set(PHP_LIBDIR_SUFFIX "" CACHE STRING "定义32/64位系统的库文件目录的后缀")
 set(PHP_TOOLS_INSTALL_DIR "bin" CACHE STRING "设置系统工具二进制文件的安装文件夹 ( 默认为:bin ) ")
+set(PHP_COMMON_COMPILE_OPTS)
+
 mark_as_advanced(PHP_TOOLS_INSTALL_DIR)
 # 为了让生成的二进制文件便于寻找，我们在这里进行设置统一的输出文件目录
 set(PHP_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
@@ -115,6 +113,14 @@ set(PHP_I_EXCLUDE_FROM_ALL)
 
 # 设置一些全局的属性，便于操作
 set_property(GLOBAL PROPERTY PHP_I_DISPLAY_FILES)
+
+# 处理相关选项
+if(PHP_OPT_ENABLE_TEST)
+   find_package(GoogleTest)
+endif()
+if(PHP_ENABLE_CXX1Y)
+   set(PHP_COMMON_COMPILE_OPTS ${PHP_COMMON_COMPILE_OPTS} -std=c++1z)
+endif()
 
 # 探测系统包依赖
 include(PhpDetectRequirePackages)
@@ -156,7 +162,7 @@ endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # 全局的编译器相关的设置
-include_directories(${PHP_MAIN_INCLUDE_DIR} ${PHP_BINARY_INCLUDE_DIR})
+include_directories(BEFORE SYSTEM ${PHP_MAIN_INCLUDE_DIR} ${PHP_BINARY_INCLUDE_DIR})
 
 if(MINGW)
   # People report that -O3 is unreliable on MinGW. The traditional
@@ -164,6 +170,7 @@ if(MINGW)
   php_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
 endif()
 
+add_compile_options("${PHP_COMMON_COMPILE_OPTS}")
 # 处理相关子文件夹文件
 add_subdirectory(cmake/modules)
 add_subdirectory(include)

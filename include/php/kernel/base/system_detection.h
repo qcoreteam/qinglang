@@ -36,7 +36,7 @@
      FREEBSD  - PHP_OS_FREEBSD is defined only when building for FreeBSD with a BSD userland
               - PHP_OS_FREEBSD_KERNEL is always defined on FreeBSD, even if the userland is from GNU
 */
-#if defined(__APPLE__) && (defined(__GCC__) || defined(__xlC__) || defined(__xlc__))
+#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
 #  include <TargetConditionals.h>
 #  if defined(TARGET_OS_MAC) && TARGET_OS_MAC
 #     define PHP_OS_DARWIN
@@ -74,7 +74,7 @@
 #  define PHP_OS_UNIXWARE
 #else
 #  error "php++ 还没有移植到当前操作系统"
-#endif
+#endif //defined(__APPLE__) && (defined(__GCC__) || defined(__xlC__) || defined(__xlc__))
 
 // 为了兼容定义几个别名
 #ifdef PHP_OS_DARWIN
@@ -91,6 +91,12 @@
 #  define PHP_OS_OSX
 #endif
 
+#ifdef PHP_OS_DARWIN
+#  include <Availability.h>
+#  include <AvailabilityMacros.h>
+
+#endif
+
 #ifdef __LSB_VERSION__
 #  if __LSB_VERSION__ < 40
 #     error "Linux Standard Base版本过低"
@@ -101,5 +107,4 @@
 #  define PHP_LINUX_BASE
 #endif
 
-#endif //defined(__APPLE__) && (defined(__GCC__) || defined(__xlC__) || defined(__xlc__))
 #endif //PHP_KERNEL_BASE_SYSTEM_DETECTION_H
