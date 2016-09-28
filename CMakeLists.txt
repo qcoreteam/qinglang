@@ -6,7 +6,6 @@ set(CMAKE_MODULE_PATH
    ${CMAKE_MODULE_PATH})
 
 project(php_plusplus CXX)
-
 # 设置相关版本信息
 set(PHP_VERSION_MAJOR 0)
 set(PHP_VERSION_MINOR 0)
@@ -80,6 +79,8 @@ set(PHP_PTHREAD_LIB)
 set(PHP_LIBDIR_SUFFIX "" CACHE STRING "定义32/64位系统的库文件目录的后缀")
 set(PHP_TOOLS_INSTALL_DIR "bin" CACHE STRING "设置系统工具二进制文件的安装文件夹 ( 默认为:bin ) ")
 set(PHP_COMMON_COMPILE_OPTS)
+set(PHP_DEBUG_BUILD OFF)
+set(PHP_SUPPORTED_COMPILER_FEATURES) # 编译器支持的feature集合
 
 mark_as_advanced(PHP_TOOLS_INSTALL_DIR)
 # 为了让生成的二进制文件便于寻找，我们在这里进行设置统一的输出文件目录
@@ -123,9 +124,16 @@ if(PHP_ENABLE_CXX1Y)
    set(PHP_COMMON_COMPILE_OPTS ${PHP_COMMON_COMPILE_OPTS} -std=c++1z)
 endif()
 
+if(PHP_TEMP_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+   set(PHP_DEBUG_BUILD ON)
+endif()
+
 # 探测系统包依赖
 include(PhpDetectRequirePackages)
 include(PhpCheckRequireHeaders)
+
+# 探测编译器的features集合
+include(PhpDetectCompilerFeatures)
 
 # 探测系统编译环境
 
@@ -163,7 +171,7 @@ endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # 全局的编译器相关的设置
-include_directories(BEFORE SYSTEM ${PHP_MAIN_INCLUDE_DIR} ${PHP_BINARY_INCLUDE_DIR})
+include_directories(BEFORE SYSTEM "/usr/local/include/c++/v1" ${PHP_MAIN_INCLUDE_DIR} ${PHP_BINARY_INCLUDE_DIR})
 
 if(MINGW)
   # People report that -O3 is unreliable on MinGW. The traditional
@@ -172,6 +180,7 @@ if(MINGW)
 endif()
 
 add_compile_options("${PHP_COMMON_COMPILE_OPTS}")
+
 # 处理相关子文件夹文件
 add_subdirectory(cmake/modules)
 add_subdirectory(include)

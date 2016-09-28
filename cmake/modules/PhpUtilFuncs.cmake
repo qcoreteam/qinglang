@@ -169,3 +169,15 @@ function(php_add_display_target)
    add_custom_target(display_targets SOURCES ${display_files})
 endfunction()
 
+# 探测编译器feature宏
+# feature 需要探测的feature名称
+# out_value 结果输出变量
+macro(php_m_detect_compiler_feature feature_name out_value)
+   list(FIND CMAKE_CXX_COMPILE_FEATURES ${feature_name} idx)
+   if(idx LESS 0)
+      set(${out_value} OFF)
+   else()
+      set(PHP_SUPPORTED_COMPILER_FEATURES ${PHP_SUPPORTED_COMPILER_FEATURES} ${feature_name})
+      set(${out_value} ON)
+   endif()
+endmacro()

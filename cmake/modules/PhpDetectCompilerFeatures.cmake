@@ -1,0 +1,1 @@
+php_m_detect_compiler_feature(cxx_alias_templates PHP_HAVE_TEMPL)

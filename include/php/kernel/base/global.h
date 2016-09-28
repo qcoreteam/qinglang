@@ -57,15 +57,14 @@
 #if __cplusplus
 #  include <algorithm>
 
-#  define PHP_PREPEND_G_NAMESPACE(name) ::php::name
-#  define PHP_USE_G_NAMESPACE using namespace ::php;
-#  define PHP_BEGIN_G_NAMESPACE namespace php{
+#  define PHP_PREPEND_G_NAMESPACE(name) ::Php::name
+#  define PHP_USE_G_NAMESPACE using namespace ::Php;
+#  define PHP_BEGIN_G_NAMESPACE namespace Php{
 #  define PHP_END_NAMESPACE }
 #  define PHP_EXIT_G_NAMESPACE }
-#  define PHP_ENTER_G_NAMESPACE namespace php{
+#  define PHP_ENTER_G_NAMESPACE namespace Php{
 
-namespace php{} //定义全局的php名称空间
-
+namespace Php{} //定义全局的php名称空间
 #endif // __cplusplus
 
 PHP_BEGIN_G_NAMESPACE
@@ -182,19 +181,19 @@ PHP_DECL_CONSTEXPR inline int php_round64(float f)
 }
 
 template <typename T>
-PHP_DECL_CONSTEXPR inline T &php_min(const T &left, const T &right)
+PHP_DECL_CONSTEXPR inline const T &php_min(const T &left, const T &right)
 {
    return (left < right) ? left : right;
 }
 
 template <typename T>
-PHP_DECL_CONSTEXPR inline T &php_max(const T &left, const T &right)
+PHP_DECL_CONSTEXPR inline const T &php_max(const T &left, const T &right)
 {
    return (left > right) ? left : right;
 }
 
 template <typename T>
-PHP_DECL_CONSTEXPR inline T &php_bound(const T &min, const T &value, const T &max)
+PHP_DECL_CONSTEXPR inline T const &php_bound(const T &min, const T &value, const T &max)
 {
    return php_max(min, php_min(value, max));
 }
@@ -210,11 +209,11 @@ inline void php_noop(void) {}
 PHP_NORETURN PHP_CORE_EXPORT void php_terminate() PHP_DECL_NOTHROW;
 
 // 实现指定的expr在有异常的时候调用php_terminate函数终止整个处理过程
-#ifdef PHP_COMPILER_NOEXCEPT
-#  define PHP_TERMIANTE_ON_EXCEPTION(expr) do { expr; } while(0)
-#else
-#  define PHP_TERMINATE_ON_EXCEPTION(expr) do { try { expr }catch(...){php_terminate();}}while(0)
-#endif
+#  ifdef PHP_COMPILER_NOEXCEPT
+#     define PHP_TERMIANTE_ON_EXCEPTION(expr) do { expr; } while(0)
+#  else
+#     define PHP_TERMINATE_ON_EXCEPTION(expr) do { try { expr }catch(...){php_terminate();}}while(0)
+#  endif
 #else
 #  define PHP_TRY if(true)
 #  define PHP_CATCH(E) else
@@ -222,6 +221,94 @@ PHP_NORETURN PHP_CORE_EXPORT void php_terminate() PHP_DECL_NOTHROW;
 #  define PHP_RETHROW(E) php_noop();
 #  define PHP_TERMINATE_ON_EXCEPTION(expr) do { expr; }while(0)
 #endif // PHP_ENABLE_EXCEPTIONS
+
+#ifndef PHP_OUTOFLINE_TEMPLATE
+#  define PHP_OUTOFLINE_TEMPLATE
+#endif
+
+#ifndef PHP_INLINE_TEMPLATE
+#  define PHP_INLINE_TEMPLATE inline
+#endif
+
+// Avoid "unused parameter" warnings
+#define PHP_UNUSED(x) (void)x;
+
+#if defined(PHP_DEBUG_BUILD) && !defined(PHP_DEBUG)
+#  define PHP_DEBUG
+#endif
+
+#ifndef PHP_CC_MSVC
+#  define PHP_NORETURN
+#endif
+
+/*
+ * @TODO 编译器相关的debug信息的输出 
+ */
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(double p1, double p2) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(double p1, double p2)
+{
+   return (php_abs(p1 - p2) * 1000000000000.) <= php_min(php_abs(p1), php_abs(p2));
+}
+
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(float p1, float p2) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(float p1, float p2)
+{
+   return (php_abs(p1 - p2) * 100000.f) <= php_min(php_abs(p1), php_abs(p2));
+}
+
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_is_null(double value) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_is_null(double value)
+{
+   return php_abs(value) <= 0.000000000001;
+}
+
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_is_null(float value) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+PHP_DECL_CONSTEXPR static inline bool php_fuzzy_is_null(float value)
+{
+   return php_abs(value) <= 0.00001f; 
+}
+
+/*
+   This function tests a double for a null value. It doesn't
+   check whether the actual value is 0 or close to 0, but whether
+   it is binary 0, disregarding sign.
+*/
+static inline bool php_is_null(double value) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+static inline bool php_is_null(double value)
+{
+   union U {
+      double d;
+      php_uint64 u;
+   };
+   U val;
+   val.d = value;
+   return (val.u & PHP_UINT64_C(0x7fffffffffffffff)) == 0;
+}
+
+/*
+   This function tests a float for a null value. It doesn't
+   check whether the actual value is 0 or close to 0, but whether
+   it is binary 0, disregarding sign.
+*/
+static inline bool php_is_null(float value) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
+static inline bool php_is_null(float value)
+{
+   union U {
+      float f;
+      php_uint32 u;
+   };
+   U val;
+   val.f = value;
+   return (val.u & 0x7fffffff) == 0;
+}
+
+namespace Internal{
+namespace SwapExceptionTester{
+   using std::swap;
+   template <typename T>
+   void check_swap(T &t) PHP_DECL_NOEXCEPT_EXPR(noexcept(swap(t, t)));
+} // SwapExceptionTester
+} // Internal
 
 PHP_END_NAMESPACE
 

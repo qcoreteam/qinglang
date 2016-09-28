@@ -15,5 +15,9 @@
 
 /* php++ build shared library */
 #cmakedefine PHP_BUILD_SHARED_LIBS 1
+
 /* php++ 是否开启异常机制 */
 #cmakedefine PHP_ENABLE_EXCEPTIONS 1
+
+/* php++ 是否是debug模式进行编译 */
+#cmakedefine PHP_DEBUG_BUILD 1

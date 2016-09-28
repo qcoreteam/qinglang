@@ -17,6 +17,7 @@
 */
 #ifndef PHP_KERNEL_BASE_COMPILER_DETECTION_H
 #define PHP_KERNEL_BASE_COMPILER_DETECTION_H
+
 /*
    The compiler, must be one of: (PHP_CC_x)
 
@@ -735,7 +736,6 @@
 #        define PHP_COMPILER_EXTERN_TEMPLATES
 #     endif
 #  endif
-
 /* C++1y features, deprecated macros. Do not update this list. */
 #  if __cplusplus > 201103L
 //#    if __has_feature(cxx_binary_literals)
@@ -743,6 +743,7 @@
 //#    endif
 #     if __has_feature(cxx_generic_lambda)
 #        define PHP_COMPILER_GENERIC_LAMBDA
+
 #     endif
 #     if __has_feature(cxx_init_capture)
 #        define PHP_COMPILER_LAMBDA_CAPTURES
@@ -1323,4 +1324,4 @@
 #  undef PHP_COMPILER_SUPPORTS_MIPS_DSPR2
 #endif
 
-#endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H 
+#endif // PHP_KERNEL_BASE_COMPILER_DETECTION_H
