@@ -12,3 +12,6 @@
 
 /* PHP++ version string */
 #define PHP_VERSION_STR "${PHP_VERSION_STR}"
+
+/* PHP++ build shared library */
+#cmakedefine PHP_BUILD_SHARED_LIBS
