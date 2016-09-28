@@ -181,6 +181,24 @@ PHP_DECL_CONSTEXPR inline php_round64(float f)
    return f > 0.0f ? php_int64(f + 0.5f) : php_int64(f - float(php_int64(f - 1)) + 0.5f) + php_int64(f - 1);
 }
 
+template <typename T>
+PHP_DECL_CONSTEXPR inline T &php_min(const T &left, const T &right)
+{
+   return (left < right) ? left : right;
+}
+
+template <typename T>
+PHP_DECL_CONSTEXPR inline T &php_max(const T &left, const T &right)
+{
+   return (left > right) ? left : right;
+}
+
+template <typename T>
+PHP_DECL_CONSTEXPR inline T &php_bound(const T &min, const T &value, const T &max)
+{
+   return php_max(min, php_min(value, max));
+}
+
 PHP_END_NAMESPACE
 
 #endif // PHP_KERNEL_BASE_GLOBAL_H
