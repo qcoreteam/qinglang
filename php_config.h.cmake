@@ -10,8 +10,10 @@
 /* stage version of the PHP++ API */
 #define PHP_VERSION_STAGE "${PHP_VERSION_STAGE}"
 
-/* PHP++ version string */
+/* php++ version string */
 #define PHP_VERSION_STR "${PHP_VERSION_STR}"
 
-/* PHP++ build shared library */
-#cmakedefine PHP_BUILD_SHARED_LIBS
+/* php++ build shared library */
+#cmakedefine PHP_BUILD_SHARED_LIBS 1
+/* php++ 是否开启异常机制 */
+#cmakedefine PHP_ENABLE_EXCEPTIONS 1

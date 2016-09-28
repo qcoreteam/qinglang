@@ -161,22 +161,22 @@ PHP_DECL_CONSTEXPR inline T php_abs(const T &t)
 /*
  * 这几个函数到时候可以使用最新的concept进行优化
  */
-PHP_DECL_CONSTEXPR inline php_round(double d)
+PHP_DECL_CONSTEXPR inline int php_round(double d)
 {
    return d >= 0.0 ? int(d + 0.5) : int(d - double(int(d - 1)) + 0.5) + int(d - 1);
 }
 
-PHP_DECL_CONSTEXPR inline php_round(float f)
+PHP_DECL_CONSTEXPR inline int php_round(float f)
 {
    return f > 0.0f ? int(f + 0.5f) : int(f - float(int(f - 1)) + 0.5f) + int(f - 1);
 }
 
-PHP_DECL_CONSTEXPR inline php_round64(double d)
+PHP_DECL_CONSTEXPR inline int php_round64(double d)
 {
    return d >= 0.0 ? php_int64(d + 0.5) : php_int64(d - double(php_int64(d - 1)) + 0.5) + php_int64(d - 1);
 }
 
-PHP_DECL_CONSTEXPR inline php_round64(float f)
+PHP_DECL_CONSTEXPR inline int php_round64(float f)
 {
    return f > 0.0f ? php_int64(f + 0.5f) : php_int64(f - float(php_int64(f - 1)) + 0.5f) + php_int64(f - 1);
 }
@@ -198,6 +198,30 @@ PHP_DECL_CONSTEXPR inline T &php_bound(const T &min, const T &value, const T &ma
 {
    return php_max(min, php_min(value, max));
 }
+
+inline void php_noop(void) {}
+
+// 定义一些处理异常的宏
+#ifdef PHP_ENABLE_EXCEPTIONS
+#  define PHP_TRY try
+#  define PHP_CATCH(E) catch(E)
+#  define PHP_THROW(E) throw E
+#  define PHP_RETHROW throw
+PHP_NORETURN PHP_CORE_EXPORT void php_terminate() PHP_DECL_NOTHROW;
+
+// 实现指定的expr在有异常的时候调用php_terminate函数终止整个处理过程
+#ifdef PHP_COMPILER_NOEXCEPT
+#  define PHP_TERMIANTE_ON_EXCEPTION(expr) do { expr; } while(0)
+#else
+#  define PHP_TERMINATE_ON_EXCEPTION(expr) do { try { expr }catch(...){php_terminate();}}while(0)
+#endif
+#else
+#  define PHP_TRY if(true)
+#  define PHP_CATCH(E) else
+#  define PHP_THROW(E) php_noop();
+#  define PHP_RETHROW(E) php_noop();
+#  define PHP_TERMINATE_ON_EXCEPTION(expr) do { expr; }while(0)
+#endif // PHP_ENABLE_EXCEPTIONS
 
 PHP_END_NAMESPACE
 

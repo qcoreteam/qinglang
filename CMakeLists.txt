@@ -64,6 +64,7 @@ option(PHP_ENABLE_MODULES            "使用 C++ modules进行编译" OFF)
 option(PHP_ENABLE_CXX1Y              "使用C++1y标准进行编译" ON)
 option(PHP_ENABLE_PEDANTIC           "编译的时候输出详细的信息" ON)
 option(PHP_ENABLE_WERROR             "当有警告产生的时候就停止编译，这个选项对于消除编译警告很有作用" OFF)
+option(PHP_ENABLE_EXCEPTIONS         "是否开启异常机制" ON)
 
 if(PHP_TEMP_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
    option(PHP_ENABLE_ASSERTIONS "打开assertions宏输出" ON)
