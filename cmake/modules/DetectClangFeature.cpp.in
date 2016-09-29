@@ -1,0 +1,13 @@
+#include <map>
+#include <string>
+#include <iostream>
+int main(int argc, char* argv[])
+{
+   std::map<std::string, bool> featureStatus;
+   ${PHP_TEMP_FEATURE_DETECT_MACROS}
+   for (auto it = featureStatus.begin(); it != featureStatus.end(); ++it) 
+   {
+       std::cout << it->first << ":" << (it->second ? "ON" : "OFF") << ';';
+   }
+   return 0;
+}

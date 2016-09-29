@@ -169,15 +169,56 @@ function(php_add_display_target)
    add_custom_target(display_targets SOURCES ${display_files})
 endfunction()
 
-# 探测编译器feature宏
+
 # feature 需要探测的feature名称
 # out_value 结果输出变量
-macro(php_m_detect_compiler_feature feature_name out_value)
-   list(FIND CMAKE_CXX_COMPILE_FEATURES ${feature_name} idx)
-   if(idx LESS 0)
-      set(${out_value} OFF)
-   else()
-      set(PHP_SUPPORTED_COMPILER_FEATURES ${PHP_SUPPORTED_COMPILER_FEATURES} ${feature_name})
-      set(${out_value} ON)
+macro(php_m_register_clang_feature feature_name out_value)
+   string(STRIP "${feature_name}" feature_name)
+   string(STRIP "${out_value}" out_value)
+   if(feature_name STREQUAL "")
+      message(FATAL_ERROR "feature_name can not be empty")
+   endif()
+   if(out_value STREQUAL "")
+      message(FATAL_ERROR "out_value can not be empty")
+   endif()
+   set(PHP_INTERNAL_COMPILER_FEATURES ${PHP_INTERNAL_COMPILER_FEATURES} ${feature_name})
+   set(PHP_INTERNAL_COMPILER_FEATURE_DETECT_OUT_VARS ${PHP_INTERNAL_COMPILER_FEATURE_DETECT_OUT_VARS} ${out_value})
+endmacro()
+
+macro(php_m_detect_clang_features)
+   # 首先生成探测的cxx宏定义 TODO暂时不做合法性判断
+   set(PHP_TEMP_FEATURE_DETECT_MACROS)
+   list(LENGTH PHP_INTERNAL_COMPILER_FEATURES feature_length)
+   if(feature_length GREATER 0)
+      math(EXPR feature_length " ${feature_length} - 1")
+      foreach(idx RANGE 0 ${feature_length})
+         list(GET PHP_INTERNAL_COMPILER_FEATURES ${idx} cur_feature)
+         list(GET PHP_INTERNAL_COMPILER_FEATURE_DETECT_OUT_VARS ${idx} cur_out_var)
+         set(PHP_TEMP_FEATURE_DETECT_MACROS ${PHP_TEMP_FEATURE_DETECT_MACROS} "
+            #if __has_feature(${cur_feature})
+            featureStatus[\"${cur_out_var}\"] = true;
+            #else
+            featureStatus[\"${cur_out_var}\"] = false;
+            #endif
+            ")
+      endforeach()
+      configure_file(${PHP_CMAKE_MODULE_DIR}/DetectClangFeature.cpp.in
+         ${CMAKE_BINARY_DIR}/CMakeTmp/DetectClangFeature.cpp)
+      try_run(run_ret compiler_ret
+         ${CMAKE_BINARY_DIR}
+         ${CMAKE_BINARY_DIR}/CMakeTmp/DetectClangFeature.cpp
+         COMPILE_DEFINITIONS ${PHP_COMMON_COMPILE_OPTS}
+         RUN_OUTPUT_VARIABLE run_output_var
+         COMPILE_OUTPUT_VARIABLE compiler_output_var
+         )
+      if(NOT run_ret EQUAL 0)
+         message(FATAL_ERROR "runtime error")
+      endif()
+      foreach(cur_ret ${run_output_var})
+         string(REPLACE ":" ";" cur_ret ${cur_ret})
+         list(GET cur_ret 0 feature_output_varname)
+         list(GET cur_ret 1 feature_flag)
+         set(${feature_output_varname} ${feature_flag})
+      endforeach()
    endif()
 endmacro()

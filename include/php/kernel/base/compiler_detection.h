@@ -736,6 +736,7 @@
 #        define PHP_COMPILER_EXTERN_TEMPLATES
 #     endif
 #  endif
+
 /* C++1y features, deprecated macros. Do not update this list. */
 #  if __cplusplus > 201103L
 //#    if __has_feature(cxx_binary_literals)
@@ -743,7 +744,6 @@
 //#    endif
 #     if __has_feature(cxx_generic_lambda)
 #        define PHP_COMPILER_GENERIC_LAMBDA
-
 #     endif
 #     if __has_feature(cxx_init_capture)
 #        define PHP_COMPILER_LAMBDA_CAPTURES
@@ -1201,7 +1201,7 @@
 #  define PHP_HAS_CPP_ATTRIBUTE(x) 0
 #endif
 
-#ifdef __has_include
+#ifdef __has_include 
 #  define PHP_HAS_INCLUDE(x) __has_include(x)
 #else
 #  define PHP_HAS_INCLUDE(x) 0

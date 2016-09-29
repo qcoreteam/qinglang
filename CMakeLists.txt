@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.6.2)
 # 设置modules的路径
 set(CMAKE_MODULE_PATH
    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
@@ -29,13 +29,14 @@ if(PHP_P_STAGE_RET EQUAL "-1")
 endif()
 
 # 加载相关依赖库
+include(CheckIncludeFile)
 include(PhpCompilerFlagFuncs)
 include(PhpUtilFuncs)
 include(PhpBuildHelpFuncs)
 include(PhpHandleCommonOpts)
 
 # 配置信息合法性检查
-if(NOT CMAKE_BUILD_TYPE AND CMAKE_CONFIGURATION_TYPES)
+if(NOT CMAKE_BUILD_TYPE)
    message(STATUS "没有指定编译类型, 默认设置为 Debug")
    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "编译类型 (默认 Debug)")
 endif()
@@ -64,7 +65,6 @@ option(PHP_ENABLE_CXX1Y              "使用C++1y标准进行编译" ON)
 option(PHP_ENABLE_PEDANTIC           "编译的时候输出详细的信息" ON)
 option(PHP_ENABLE_WERROR             "当有警告产生的时候就停止编译，这个选项对于消除编译警告很有作用" OFF)
 option(PHP_ENABLE_EXCEPTIONS         "是否开启异常机制" ON)
-
 if(PHP_TEMP_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
    option(PHP_ENABLE_ASSERTIONS "打开assertions宏输出" ON)
 elseif()
@@ -81,7 +81,7 @@ set(PHP_TOOLS_INSTALL_DIR "bin" CACHE STRING "设置系统工具二进制文件�
 set(PHP_COMMON_COMPILE_OPTS)
 set(PHP_DEBUG_BUILD OFF)
 set(PHP_SUPPORTED_COMPILER_FEATURES) # 编译器支持的feature集合
-
+set(PHP_CMAKE_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 mark_as_advanced(PHP_TOOLS_INSTALL_DIR)
 # 为了让生成的二进制文件便于寻找，我们在这里进行设置统一的输出文件目录
 set(PHP_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
@@ -123,7 +123,6 @@ endif()
 if(PHP_ENABLE_CXX1Y)
    set(PHP_COMMON_COMPILE_OPTS ${PHP_COMMON_COMPILE_OPTS} -std=c++1z)
 endif()
-
 if(PHP_TEMP_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
    set(PHP_DEBUG_BUILD ON)
 endif()

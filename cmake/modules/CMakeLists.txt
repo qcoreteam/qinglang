@@ -87,4 +87,5 @@ configure_file(
 
 php_add_file_to_display_pool(
    PhpCfgFuncs.cmake
-   PhpInstallSymlink.cmake)
+   PhpInstallSymlink.cmake
+   DetectClangFeature.cpp.in)
