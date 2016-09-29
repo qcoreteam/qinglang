@@ -19,9 +19,6 @@
 #ifndef PHP_KERNEL_CLI_TERMINAL_H
 #define PHP_KERNEL_CLI_TERMINAL_H
 
-#include <utility>
-#include <map>
-
 namespace php{
 namespace kernel{
 namespace io{

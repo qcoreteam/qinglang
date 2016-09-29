@@ -1,0 +1,4 @@
+set(BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ds)
+
+set(PHP_KERNEL_LIB_SRCS  ${PHP_KERNEL_LIB_SRCS}
+   ${BASE_DIR}/byte_array.cpp)

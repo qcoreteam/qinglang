@@ -307,8 +307,17 @@ namespace SwapExceptionTester{
    using std::swap;
    template <typename T>
    void check_swap(T &t) PHP_DECL_NOEXCEPT_EXPR(noexcept(swap(t, t)));
+   //只能在unevaluated context环境中使用
 } // SwapExceptionTester
 } // Internal
+
+template <typename T>
+inline void php_swap(T &value1, T &value2)
+   PHP_DECL_NOEXCEPT_EXPR(noexcept(Internal::SwapExceptionTester::check_swap(value1)))
+{
+   using std::swap;
+   swap(value1, value2);
+}
 
 PHP_END_NAMESPACE
 
