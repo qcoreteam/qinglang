@@ -15,36 +15,73 @@
    | Authors: zzu_softboy <zzu_softboy@163.com>                           |
    +----------------------------------------------------------------------+
 */
-#ifndef PHP_KERNEL_BASE_TYPE_TRAITS_H
-#define PHP_KERNEL_BASE_TYPE_TRAITS_H
+#ifndef PHP_KERNEL_THREAD_GENERIC_ATOMIC_H
+#define PHP_KERNEL_THREAD_GENERIC_ATOMIC_H
 
-#include <utility>
-#include "php/kernel/base/global.h"
+#include <cstddef>
+
+#include "php/kernel/base/type_info.h"
 
 namespace Php {
 namespace Kernel {
-namespace Base {
-namespace Internal {
+namespace Thread {
 
-typedef char small_;
-
-struct big_
+template<int> 
+struct AtomicOperationsSupport
 {
-   char dumy[2];   
+   PHP_DECL_CONSTEXPR int IsSupported = 0;
 };
 
-// Identity metafunction
+template<>
+struct AtomicOperationsSupport<4>
+{
+   PHP_DECL_CONSTEXPR int IsSupported = 1;
+};
+
+template <typename T> 
+struct AtomicAdditiveType
+{
+   using AdditiveType = T;
+   static const int addScale = 1;
+};
+
 template <typename T>
-struct Identity_
+struct AtomicAdditiveType<T *>
 {
-   typedef T type;
+   using AdditiveType = std::ptrdiff_t;
+   static const int addScale = sizeof(T);
 };
 
+/*
+ * @TODO 使用concept优化 
+ */
+template <typename BaseClass>
+struct GenericAtomOperations
+{
+   template <typename T>
+   struct AtomicType
+   {
+      using Type = T;
+      using PointerType = T*;
+   };
+   
+   template <typename T>
+   static void acquireMemoryFence(const T &value) PHP_DECL_NOTHROW
+   {
+      BaseClass::orderedMemoryFence(value);
+   }
+   
+   template <typename T>
+   static void releaseMemoryFence(const T &value) PHP_DECL_NOTHROW
+   {
+      BaseClass::orderedMemoryFence(value);
+   }
+   
+   
+};
 
+} // Thread
+} // Kernel
+} // Php
 
-} // Internal
-} // base
-} // kernel
-} // php
-
-#endif // PHP_KERNEL_BASE_TYPE_TRAITS_H
+#endif // PHP_KERNEL_THREAD_GENERIC_ATOMIC_H

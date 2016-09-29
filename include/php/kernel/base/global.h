@@ -244,6 +244,18 @@ PHP_NORETURN PHP_CORE_EXPORT void php_terminate() PHP_DECL_NOTHROW;
 /*
  * @TODO 编译器相关的debug信息的输出 
  */
+
+#ifdef PHP_CC_MSVC
+#  define PHP_NEVER_INLINE __declspec(noinline)
+#  define PHP_ALWAYS_INLINE __forceinline
+#elif defined(PHP_CC_GNU)
+#  define PHP_NEVER_INLINE __attribute__((noinline))
+#  define PHP_ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+#  define PHP_NEVER_INLINE
+#  define PHP_ALWAYS_INLINE inline
+#endif
+
 PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(double p1, double p2) PHP_REQUIRED_RESULT PHP_DECL_UNUSED;
 PHP_DECL_CONSTEXPR static inline bool php_fuzzy_compare(double p1, double p2)
 {
