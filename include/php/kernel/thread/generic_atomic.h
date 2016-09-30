@@ -35,12 +35,6 @@ struct AtomicOperationsSupport
    const int IsSupported = 0;
 };
 
-template<>
-struct AtomicOperationsSupport<4>
-{
-   const int IsSupported = 1;
-};
-
 template <typename T> 
 struct AtomicAdditiveType
 {

@@ -72,7 +72,7 @@ PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
 {
    return true;
 }
-   
+
 #elif ATOMIC_INT_LOCK_FREE == 1
 #  define PHP_ATOMIC_INT_REFERENCE_COUNTING_IS_SOMETIMES_NATIVE
 #  define PHP_ATOMIC_INT_TEST_AND_SET_IS_SOMETIMES_NATIVE
@@ -238,7 +238,7 @@ PHP_DECL_CONSTEXPR inline bool AtomicTraits<8>::isLockFree()
    return true;
 }
 
-#else ATOMIC_LLONG_LOCK_FREE == 1
+#elif ATOMIC_LLONG_LOCK_FREE == 1
 
 #  define PHP_ATOMIC_INT64_REFERENCE_COUNTING_IS_SOMETIMES_NATIVE
 #  define PHP_ATOMIC_INT64_TEST_AND_SET_IS_SOMETIMES_NATIVE
@@ -266,6 +266,351 @@ PHP_DECL_CONSTEXPR inline bool AtomicTraits<8>::isLockFree()
 
 #endif
 
+template <typename X>
+struct AtomicOperations
+{
+   using Type = std::atomic<X>;
+   template <typename T>
+   static inline T load(const std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.load(std::memory_order_relaxed);
+   };
+   
+   template <typename T>
+   static inline T load(const volatile std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.load(std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T loadAcquire(const std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.load(std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T loadAcquire(const volatile std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.load(std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T store(const std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.store(newValue, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T store(const volatile std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.store(newValue, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T storeRelease(const std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.store(newValue, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T storeRelease(const volatile std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.store(newValue, std::memory_order_release);
+   }
+   
+   static inline PHP_DECL_CONSTEXPR bool isReferenceCountingNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_DECL_CONSTEXPR bool isReferenceCountingWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline bool ref(std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return ++atomicValue != 0;
+   }
+   
+   template <typename T>
+   static inline bool deref(std::atomic<T> &atomicValue) PHP_DECL_NOEXCEPT
+   {
+      return --atomicValue != 0;
+   }
+   // TestAndSet 相关接口
+   static inline PHP_DECL_CONSTEXPR bool isTestAndSetNative() PHP_DECL_NOEXCEPT
+   {
+      return AtomicTraits<sizeof(X)>::isLockFree();
+   }
+   
+   static inline PHP_DECL_CONSTEXPR bool isTestAndSetWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static bool testAndSetRelaxed(std::atomic<T> &atomicValue, T expectValue, T newValue, T *currentValue = nullptr) PHP_DECL_NOEXCEPT
+   {
+      bool tmp = atomicValue.compare_exchange_strong(expectValue, newValue, std::memory_order_relaxed);
+      if(nullptr != currentValue){
+         *currentValue = expectValue;
+      }
+      return tmp;
+   }
+   
+   template <typename T>
+   static bool testAndSetAcquire(std::atomic<T> &atomicValue, T expectValue, T newValue, T *currentValue = nullptr) PHP_DECL_NOEXCEPT
+   {
+      bool tmp = atomicValue.compare_exchange_strong(expectValue, newValue, std::memory_order_acquire);
+      if(nullptr != currentValue){
+         *currentValue = expectValue;
+      }
+      return tmp;
+   }
+   
+   template <typename T>
+   static bool testAndSetRelease(std::atomic<T> &atomicValue, T expectValue, T newValue, T *currentValue = nullptr) PHP_DECL_NOEXCEPT
+   {
+      bool tmp = atomicValue.compare_exchange_strong(expectValue, newValue, std::memory_order_release);
+      if(nullptr != currentValue){
+         *currentValue = expectValue;
+      }
+      return tmp;
+   }
+   
+   template <typename T>
+   static bool testAndSetOrdered(std::atomic<T> &atomicValue, T expectValue, T newValue, T *currentValue = nullptr) PHP_DECL_NOEXCEPT
+   {
+      bool tmp = atomicValue.compare_exchange_strong(expectValue, newValue, std::memory_order_acq_rel);
+      if(nullptr != currentValue){
+         *currentValue = expectValue;
+      }
+      return tmp;
+   }
+   
+   // FetchAndStore 接口
+   static inline PHP_DECL_CONSTEXPR bool isFetchAndStoreNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_DECL_CONSTEXPR bool isFetchAndStoreWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static T fetchAndStoreRelaxed(std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.exchange(newValue, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static T fetchAndStoreAcquire(std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.exchange(newValue, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static T fetchAndStoreRelease(std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.exchange(newValue, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static T fetchAndStoreOrdered(std::atomic<T> &atomicValue, T newValue) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.exchange(newValue, std::memory_order_acq_rel);
+   }
+   
+   // FetchAndAdd
+   
+   static inline PHP_CONSTEXPR bool isFetchAndAddNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_CONSTEXPR bool isFetchAndAddWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline T fetchAndAddRelaxed(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_add(valueToAdd, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAddAcquire(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_add(valueToAdd, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAddRelease(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_add(valueToAdd, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAddOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_add(valueToAdd, std::memory_order_acq_rel);
+   }
+   
+   // FetchAndSub
+   
+   static inline PHP_CONSTEXPR bool isFetchAndSubNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_CONSTEXPR bool isFetchAndSubWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline T fetchAndSubRelaxed(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToSub) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_sub(valueToSub, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T fetchAndSubAcquire(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToSub) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_sub(valueToSub, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T fetchAndSubRelease(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToSub) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_sub(valueToSub, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T fetchAndSubOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_sub(valueToSub, std::memory_order_acq_rel);
+   }
+   
+   // FetchAndAnd
+   
+   static inline PHP_CONSTEXPR bool isFetchAndAndNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_CONSTEXPR bool isFetchAndAndWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline T fetchAndAndRelaxed(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_and(valueToAnd, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAndAcquire(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_and(valueToAnd, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAndRelease(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_and(valueToAnd, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T fetchAndAndOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_and(valueToAnd, std::memory_order_acq_rel);
+   }
+   
+   // FetchAndOr
+   
+   static inline PHP_CONSTEXPR bool isFetchAndOrNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_CONSTEXPR bool isFetchAndOrWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline T fetchAndOrRelaxed(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToOr) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_or(valueToOr, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T fetchAndOrAcquire(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToOr) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_or(valueToOr, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T fetchAndOrRelease(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToOr) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_or(valueToOr, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T fetchAndOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_or(valueToOr, std::memory_order_acq_rel);
+   }
+   
+   // FetchAndXor
+   
+   static inline PHP_CONSTEXPR bool isFetchAndXorNative() PHP_DECL_NOEXCEPT
+   {
+      return isTestAndSetNative();
+   }
+   
+   static inline PHP_CONSTEXPR bool isFetchAndXorWaitFree() PHP_DECL_NOEXCEPT
+   {
+      return false;
+   }
+   
+   template <typename T>
+   static inline T fetchAndXorRelaxed(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToXor) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_xor(valueToXor, std::memory_order_relaxed);
+   }
+   
+   template <typename T>
+   static inline T fetchAndXorAcquire(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToXor) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_xor(valueToXor, std::memory_order_acquire);
+   }
+   
+   template <typename T>
+   static inline T fetchAndXorRelease(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToXor) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_xor(valueToXor, std::memory_order_release);
+   }
+   
+   template <typename T>
+   static inline T fetchAndXordered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToXor) PHP_DECL_NOEXCEPT
+   {
+      return atomicValue.fetch_xor(valueToXor, std::memory_order_acq_rel);
+   }
+};
+
+#if defined(PHP_COMPILER_CONSTEXPR) && defined(PHP_COMPILER_DEFAULT_MEMBERS) && defined(PHP_COMPILER_DELETE_MEMBERS)
+#  define PHP_BASIC_ATOMIC_INITIALIZER(a) { a }
+#else
+#  define PHP_BASIC_ATOMIC_INITIALIZER(a) { ATOMIC_VAR_INIT(a) }
+#endif
 
 } // Thread
 } // Kernel
