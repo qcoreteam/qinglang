@@ -26,18 +26,19 @@ namespace Php {
 namespace Kernel {
 namespace Thread {
 
-using TypeInfo = Php::Kernel::Base::TypeInfo;
+template <typename T>
+using TypeInfo = Php::Kernel::Base::TypeInfo<T>;
 
 template<int> 
 struct AtomicOperationsSupport
 {
-   PHP_DECL_CONSTEXPR int IsSupported = 0;
+   const int IsSupported = 0;
 };
 
 template<>
 struct AtomicOperationsSupport<4>
 {
-   PHP_DECL_CONSTEXPR int IsSupported = 1;
+   const int IsSupported = 1;
 };
 
 template <typename T> 
@@ -100,7 +101,7 @@ struct GenericAtomOperations
    template <typename T>
    static PHP_ALWAYS_INLINE T loadAcquire(const T &value) PHP_DECL_NOTHROW
    {
-      T tmp = *static_cast<std::add_cv<T *>::type>(&value);
+      T tmp = *static_cast<typename std::add_cv<T *>::type>(&value);
       BaseClass::acquireMemoryFence(value);
       return tmp;
    }
@@ -109,12 +110,12 @@ struct GenericAtomOperations
    static PHP_ALWAYS_INLINE void storeRelease(T &value, X newValue) PHP_DECL_NOTHROW
    {
       BaseClass::releaseMemoryFence(value);
-      *static_cast<std::add_volatile<T *>::type>(&value) = value;
+      *static_cast<typename std::add_volatile<T *>::type>(&value) = value;
    }
    
    static inline PHP_DECL_CONSTEXPR bool isReferenceCountingNative() PHP_DECL_NOTHROW
    {
-      BaseClass::isFetchAndAddNative();
+      return BaseClass::isFetchAndAddNative();
    }
    
    static inline PHP_DECL_CONSTEXPR bool isReferenceCountingWaitFree() PHP_DECL_NOTHROW
@@ -125,13 +126,13 @@ struct GenericAtomOperations
    template <typename T> 
    static PHP_ALWAYS_INLINE bool ref(T & value) PHP_DECL_NOTHROW
    {
-      return BaseClasss::fetchAndAddRelaxed(value, 1) != T(-1);
+      return BaseClass::fetchAndAddRelaxed(value, 1) != T(-1);
    }
    
    template <typename T>
    static PHP_ALWAYS_INLINE bool deref(T & value) PHP_DECL_NOTHROW
    {
-      return BaseClasss::fetchAndAddRelaxed(value, -1) != 1;
+      return BaseClass::fetchAndAddRelaxed(value, -1) != 1;
    }
    
 #if 0
@@ -171,7 +172,7 @@ struct GenericAtomOperations
    static PHP_ALWAYS_INLINE bool testAndSetAcquire(T &value, X expectedValue, X newValue, X *currentValue) PHP_DECL_NOTHROW
    {
       bool tmp = BaseClass::testAndSetRelaxed(value, expectedValue, newValue, currentValue);
-      BaseClas::acquireMemoryFence(value);
+      BaseClass::acquireMemoryFence(value);
       return tmp;
    }
    

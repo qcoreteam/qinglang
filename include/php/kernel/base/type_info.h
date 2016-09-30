@@ -89,21 +89,35 @@ public:
       isStatic = false,
       isRelocatable = true,
       isLarge = false,
-      sizeOf = sizeOf(T*)
+      sizeOf = sizeof(T*)
    };
 };
+
+// apply defaults for a generic TypeInfo<T> that didn't provide the new values
+template <typename T, typename = void>
+struct TypeInfoQuery : public TypeInfo<T>
+{
+public:
+   enum {
+      isRelocatable = !TypeInfo<T>::isStatic
+   };
+};
+
+template <typename T>
+struct TypeInfoQuery<T, typename std::enable_if<TypeInfo<T>::isRelocatable, bool>::type> : TypeInfo<T>
+{};
 
 template <typename T, typename T1, typename T2 = T1, typename T3 = T1, typename T4 = T1>
 class TypeInfoMerger
 {
 public:
    enum {
-      isComplex = TypeInfoMerger<T1>::isComplex || TypeInfoMerger<T2>::isComplex ||
-      TypeInfoMerger<T3>::isComplex || TypeInfoMerger<T4>::isComplex,
-      isStatic = TypeInfoMerger<T1>::isStatic || TypeInfoMerger<T2>::isStatic ||
-      TypeInfoMerger<T3>::isStatic || TypeInfoMerger<T4>::isStatic,
-      isRelocatable = TypeInfoMerger<T1>::isRelocatable || TypeInfoMerger<T2>::isRelocatable ||
-      TypeInfoMerger<T3>::isRelocatable || TypeInfoMerger<T4>::isRelocatable,
+      isComplex = TypeInfoQuery<T1>::isComplex || TypeInfoQuery<T2>::isComplex ||
+      TypeInfoQuery<T3>::isComplex || TypeInfoQuery<T4>::isComplex,
+      isStatic = TypeInfoQuery<T1>::isStatic || TypeInfoQuery<T2>::isStatic ||
+      TypeInfoQuery<T3>::isStatic || TypeInfoQuery<T4>::isStatic,
+      isRelocatable = TypeInfoQuery<T1>::isRelocatable || TypeInfoQuery<T2>::isRelocatable ||
+      TypeInfoQuery<T3>::isRelocatable || TypeInfoQuery<T4>::isRelocatable,
       isLarge = sizeof(T) > sizeof(void*),
       isPointer = false,
       isIntegral = false,

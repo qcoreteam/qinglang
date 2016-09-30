@@ -950,7 +950,7 @@
 
 #if defined(__cplusplus)
 #include <utility>
-#  if (defined(PHP_CC_CLANG) || defined(PHP_CC_INTEL)) && defined(__GNUC_LIBSTD__) \
+#  if (defined(PHP_CC_INTEL)) && defined(__GNUC_LIBSTD__) \
       || ((__GNU_LIBSTD__-0) * 100 + __GNU_LIBSTD_MINOR__-0 <= 402)
 // Apple has not updated libstdc++ since 2007, which means it does not have
 // <initializer_list> or std::move. Let's disable these features
@@ -958,7 +958,6 @@
 #     undef PHP_COMPILER_RVALUE_REFS
 #     undef PHP_COMPILER_REF_QUALIFIERS
 // Also disable <atomic>, since it's clearly not there
-#     undef PHP_COMPILER_ATOMICS
 #  endif
 #  if defined(PHP_CC_CLANG) && defined(PHP_CC_INTEL) && PHP_CC_INTEL >= 1500
 // ICC 15.x and 16.0 have their own implementation of std::atomic, which is activated when in Clang mode
@@ -993,7 +992,7 @@
 #     ifndef _HAS_VARIADIC_TEMPLATES
 #        undef PHP_COMPILER_VARIADIC_TEMPLATES
 #     endif
-#  elif defined(_LIBCPP_VERSION)
+#  elif !defined(PHP_CC_CLANG) && defined(_LIBCPP_VERSION)
 // libc++ uses __has_feature(cxx_atomic), so disable the feature if the compiler
 // doesn't support it. That's required for the Intel compiler 14.x or earlier on OS X, for example.
 #     if !__has_feature(cxx_atomic)
