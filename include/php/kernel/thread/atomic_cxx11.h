@@ -492,7 +492,7 @@ struct AtomicOperations
    }
    
    template <typename T>
-   static inline T fetchAndSubOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAdd) PHP_DECL_NOEXCEPT
+   static inline T fetchAndSubOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToSub) PHP_DECL_NOEXCEPT
    {
       return atomicValue.fetch_sub(valueToSub, std::memory_order_acq_rel);
    }
@@ -564,7 +564,7 @@ struct AtomicOperations
    }
    
    template <typename T>
-   static inline T fetchAndOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToAnd) PHP_DECL_NOEXCEPT
+   static inline T fetchAndOrdered(std::atomic<T> &atomicValue, typename AtomicAdditiveType<T>::AdditiveType valueToOr) PHP_DECL_NOEXCEPT
    {
       return atomicValue.fetch_or(valueToOr, std::memory_order_acq_rel);
    }
