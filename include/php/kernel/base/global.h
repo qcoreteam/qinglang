@@ -53,7 +53,6 @@
 #if defined(__MACH__) && defined(__APPLE__)
 #  define PHP_OF_MACH_O
 #endif
-
 #if __cplusplus
 #  include <algorithm>
 
@@ -131,6 +130,12 @@ PHP_ENTER_G_NAMESPACE
 #  define PHP_DEPRECATED_SINCE(major, minor) (PHP_VERSION_CHECK(major, minor, 0) > PHP_DISABLE_DEPRECATED_BEFORE)
 #else
 #  define PHP_DEPRECATED_SINCE(major, minor) 0
+#endif
+
+#ifdef PHP_OS_MACOS
+#  define SUPPRESS_EMPTY_SYMBOL_WARNING bool php_trivial_var_define = true;
+#else
+#  define SUPPRESS_EMPTY_SYMBOL_WARNING
 #endif
 
 #ifdef PHP_BUILD_SHARED_LIBS

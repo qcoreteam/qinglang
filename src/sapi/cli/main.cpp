@@ -4,5 +4,5 @@
 #include <atomic>
 int main(int argc, char* argv[])
 {
-
+   Php::php_noop();
 }

@@ -92,10 +92,10 @@ public:
    static PHP_DECL_CONSTEXPR bool isFetchAndSubNative() PHP_DECL_NOEXCEPT;
    static PHP_DECL_CONSTEXPR bool isFetchAndSubWaitFree() PHP_DECL_NOEXCEPT;
    
-   T fetchAndAddRelaxed(T valueToSub) PHP_DECL_NOEXCEPT;
-   T fetchAndAddAcquire(T valueToSub) PHP_DECL_NOEXCEPT;
-   T fetchAndAddRelease(T valueToSub) PHP_DECL_NOEXCEPT;
-   T fetchAndAddOrdered(T valueToSub) PHP_DECL_NOEXCEPT;
+   T fetchAndSubRelaxed(T valueToSub) PHP_DECL_NOEXCEPT;
+   T fetchAndSubAcquire(T valueToSub) PHP_DECL_NOEXCEPT;
+   T fetchAndSubRelease(T valueToSub) PHP_DECL_NOEXCEPT;
+   T fetchAndSubOrdered(T valueToSub) PHP_DECL_NOEXCEPT;
    
    static PHP_DECL_CONSTEXPR bool isFetchAndAndNative() PHP_DECL_NOEXCEPT;
    static PHP_DECL_CONSTEXPR bool isFetchAndAndWaitFree() PHP_DECL_NOEXCEPT;
@@ -194,8 +194,8 @@ public:
        T *fetchAndAddRelease(std::ptrdiff_t valueToAdd) PHP_DECL_NOEXCEPT;
        T *fetchAndAddOrdered(std::ptrdiff_t valueToAdd) PHP_DECL_NOEXCEPT;
        
-       static PHP_DECL_CONSTEXPR bool isFetchAndAddNative() PHP_DECL_NOEXCEPT;
-       static PHP_DECL_CONSTEXPR bool isFetchAndAddWaitFree() PHP_DECL_NOEXCEPT;
+       static PHP_DECL_CONSTEXPR bool isFetchAndSubNative() PHP_DECL_NOEXCEPT;
+       static PHP_DECL_CONSTEXPR bool isFetchAndSubWaitFree() PHP_DECL_NOEXCEPT;
    
        T *fetchAndSubRelaxed(std::ptrdiff_t valueToSub) PHP_DECL_NOEXCEPT;
        T *fetchAndSubAcquire(std::ptrdiff_t valueToSub) PHP_DECL_NOEXCEPT;
