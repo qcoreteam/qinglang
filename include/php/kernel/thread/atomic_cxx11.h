@@ -83,7 +83,8 @@ PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
 #  define PHP_ATOMIC_INT32_FETCH_AND_STORE_IS_SOMETIMES_NATIVE
 #  define PHP_ATOMIC_INT32_FETCH_AND_ADD_IS_SOMETIMES_NATIVE
 
-template <> PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
+template <> 
+PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
 { 
    return false;
 }
@@ -98,7 +99,8 @@ template <> PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
 #  define PHP_ATOMIC_INT32_FETCH_AND_STORE_IS_NEVER_NATIVE
 #  define PHP_ATOMIC_INT32_FETCH_AND_ADD_IS_NEVER_NATIVE
 
-template <> PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
+template <> 
+PHP_DECL_CONSTEXPR inline bool AtomicTraits<4>::isLockFree()
 { 
    return false; 
 }
