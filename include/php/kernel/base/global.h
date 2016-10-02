@@ -247,9 +247,63 @@ PHP_NORETURN PHP_CORE_EXPORT void php_terminate() PHP_DECL_NOTHROW;
 #endif
 
 /*
+ * 定义整形大小的检测
+ */
+template <int> 
+struct IntegerForSize
+{};
+
+template <>
+struct IntegerForSize<1>
+{
+   using Unsigned = php_uint8;
+   using Signed = php_int8;
+};
+
+template <>
+struct IntegerForSize<2>
+{
+   using Unsigned = php_uint16;
+   using Signed = php_int16;
+};
+
+template <>
+struct IntegerForSize<4>
+{
+   using Unsigned = php_uint32;
+   using Signed = php_int32;
+};
+
+template <>
+struct IntegerForSize<8>
+{
+   using Unsigned = php_uint64;
+   using Signed = php_int64;
+};
+
+#if defined(PHP_CC_GNU) && defined(__SIZEOF_INT128__)
+template <>
+struct IntegerForSize<16>
+{
+   __extension__ typedef unsigned __int128 Unsigned;
+   __extension__ typedef __int128 Signed;
+};
+#endif
+
+template <typename T>
+struct IntegerForSizeOf : IntegerForSize<sizeof(T)>
+{};
+
+using php_register_int_t = IntegerForSize<PHP_PROCESSOR_WORDSIZE>::Signed;
+using php_register_uint_t = IntegerForSize<PHP_PROCESSOR_WORDSIZE>::Unsigned;
+
+using php_uintptr_t = IntegerForSizeOf<void *>::Unsigned;
+using php_intptr_t = IntegerForSizeOf<void *>::Signed;
+using php_ptrdiff_t = php_intptr_t;
+
+/*
  * @TODO 编译器相关的debug信息的输出 
  */
-
 #ifdef PHP_CC_MSVC
 #  define PHP_NEVER_INLINE __declspec(noinline)
 #  define PHP_ALWAYS_INLINE __forceinline
@@ -321,16 +375,16 @@ static inline bool php_is_null(float value)
 
 namespace Internal{
 namespace SwapExceptionTester{
-   using std::swap;
-   template <typename T>
-   void check_swap(T &t) PHP_DECL_NOEXCEPT_EXPR(noexcept(swap(t, t)));
-   //只能在unevaluated context环境中使用
+using std::swap;
+template <typename T>
+void check_swap(T &t) PHP_DECL_NOEXCEPT_EXPR(noexcept(swap(t, t)));
+//只能在unevaluated context环境中使用
 } // SwapExceptionTester
 } // Internal
 
 template <typename T>
 inline void php_swap(T &value1, T &value2)
-   PHP_DECL_NOEXCEPT_EXPR(noexcept(Internal::SwapExceptionTester::check_swap(value1)))
+PHP_DECL_NOEXCEPT_EXPR(noexcept(Internal::SwapExceptionTester::check_swap(value1)))
 {
    using std::swap;
    swap(value1, value2);
