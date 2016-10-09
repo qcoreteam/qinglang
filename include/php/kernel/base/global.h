@@ -45,6 +45,7 @@
 #include "php/kernel/base/system_detection.h"
 #include "php/kernel/base/processor_detection.h"
 #include "php/kernel/base/compiler_detection.h"
+#include "php/kernel/base/type_traits.h"
 
 #if defined(__EFI__)
 #  define PHP_OF_ELF
