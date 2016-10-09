@@ -390,6 +390,7 @@ PHP_DECL_NOEXCEPT_EXPR(noexcept(Internal::SwapExceptionTester::check_swap(value1
    swap(value1, value2);
 }
 
+
 PHP_END_NAMESPACE
 
 #endif // PHP_KERNEL_BASE_GLOBAL_H

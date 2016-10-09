@@ -1,2 +1,3 @@
 *.user
 .gitignore~
+**/*.DS_Store
