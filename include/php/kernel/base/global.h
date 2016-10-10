@@ -45,7 +45,6 @@
 #include "php/kernel/base/system_detection.h"
 #include "php/kernel/base/processor_detection.h"
 #include "php/kernel/base/compiler_detection.h"
-#include "php/kernel/base/type_traits.h"
 
 #if defined(__EFI__)
 #  define PHP_OF_ELF
@@ -64,8 +63,12 @@
 #  define PHP_EXIT_G_NAMESPACE }
 #  define PHP_ENTER_G_NAMESPACE namespace Php{
 
+#include "php/kernel/base/type_traits.h"
+
 namespace Php{} //定义全局的php名称空间
 #endif // __cplusplus
+
+
 
 PHP_BEGIN_G_NAMESPACE
 // Size-dependent types (architechture-dependent byte order)
